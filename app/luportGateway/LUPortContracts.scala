@@ -7,7 +7,9 @@ import sigmastate.Values.ErgoTree
 
 object LUPortContracts {
   lazy val linkListTokenId: String = ""
+  lazy val linkListRepoTokenId: String = ""
   lazy val maintainerTokenId: String = ""
+  lazy val maintainerRepoTokenId: String = ""
   lazy val linkListElementTokenId: String = ""
   lazy val tokenRepoTokenId: String = "fd87d089c2945cfdec4551bc6e846c869ca5ef7e2f7790631fc6afeb708126e5"
 }
@@ -172,7 +174,8 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListElementContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("minValue", Configs.defaultTxFee)
+      .item("minValue", 1000000L)
+      .item("linkListTokenRepoId", ErgoId.create(LUPortContracts.linkListRepoTokenId).getBytes)
       .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
@@ -184,8 +187,11 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
+      .item("linkListTokenRepoId", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("minValue", Configs.defaultTxFee)
+      .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
+      .item("minValue", 1000000L)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
     linkListRepoScript
@@ -193,9 +199,11 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val maintainerRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
-      .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
+      .item("maintainerNFTToken", ErgoId.create(maintainerTokenId).getBytes)
+      .item("maintainerRepoId", ErgoId.create(maintainerRepoTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(linkListRepoTokenId).getBytes)
+      .item("linkListNFTToken", ErgoId.create(linkListTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(tokenRepoTokenId).getBytes)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
     maintainerRepoScript
@@ -205,4 +213,3 @@ class LUPortContracts(ctx: BlockchainContext) {
   maintainerAddress = Configs.addressEncoder.fromProposition(maintainerRepoContract.getErgoTree).get.toString
   linkListElementAddress = Configs.addressEncoder.fromProposition(linkListElementContract.getErgoTree).get.toString
 }
-
