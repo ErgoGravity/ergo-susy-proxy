@@ -7,7 +7,9 @@ import sigmastate.Values.ErgoTree
 
 object IBPortContracts {
   lazy val linkListTokenId: String = ""
+  lazy val linkListRepoTokenId: String = ""
   lazy val maintainerTokenId: String = ""
+  lazy val maintainerRepoTokenId: String = ""
   lazy val linkListElementTokenId: String = ""
   lazy val tokenRepoTokenId: String = "fd87d089c2945cfdec4551bc6e846c869ca5ef7e2f7790631fc6afeb708126e5"
 }
@@ -148,7 +150,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |       OUTPUTS(2).tokens(1)._1 == maintainerNFTToken
        |      ))
        |     }
-       |    else if (INPUTS(0).tokens(1)._1 == signalTokenNFT){ // approve
+       |    else if (INPUTS(0).tokens(1)._1 == signalTokenNFT){ // ChangeStatus
        |      allOf(Coll(
        |        INPUTS(2).tokens(1)._1 == linkListNFTToken,
        |        INPUTS(3).propositionBytes == SELF.propositionBytes,
@@ -163,10 +165,11 @@ class IBPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListElementContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("minValue", Configs.defaultTxFee)
+      .item("minValue", 1000000L)
       .item("maintainerNFTToken", ErgoId.create(IBPortContracts.maintainerTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(IBPortContracts.linkListTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(IBPortContracts.tokenRepoTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(IBPortContracts.linkListTokenId).getBytes)
       .build(),
     linkListElementScript
   )
@@ -175,8 +178,11 @@ class IBPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
+      .item("linkListTokenRepoId", ErgoId.create(IBPortContracts.linkListTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(IBPortContracts.linkListTokenId).getBytes)
-      .item("minValue", Configs.defaultTxFee)
+      .item("maintainerNFTToken", ErgoId.create(IBPortContracts.maintainerTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(IBPortContracts.tokenRepoTokenId).getBytes)
+      .item("minValue", 1000000L)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
     linkListRepoScript
@@ -185,6 +191,8 @@ class IBPortContracts(ctx: BlockchainContext) {
   lazy val maintainerRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
       .item("maintainerNFTToken", ErgoId.create(IBPortContracts.maintainerTokenId).getBytes)
+      .item("maintainerRepoId", ErgoId.create(IBPortContracts.maintainerRepoTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(IBPortContracts.linkListRepoTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(IBPortContracts.linkListTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(IBPortContracts.tokenRepoTokenId).getBytes)
       .item("linkListElementRepoContractHash", linkListElementHash)
