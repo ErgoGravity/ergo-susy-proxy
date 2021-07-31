@@ -14,12 +14,6 @@ import javax.inject.Inject
 
 class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
   private val logger: Logger = Logger(this.getClass)
-  var gatewayAddresses: LUPortContracts = _
-
-  def this(utils: Utils, networkIObject: NetworkIObject, gatewayAddresses: LUPortContracts) = {
-    this(utils, networkIObject)
-    this.gatewayAddresses = networkIObject.luportContractsInterface.get
-  }
 
   private def selectRandomBox(seq: Seq[InputBox]): Option[InputBox] = {
     val random = new SecureRandom()
@@ -27,6 +21,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
   }
 
   private def getSpecBox(typeBox: String, random: Boolean = false): InputBox = {
+    val gatewayAddresses: LUPortContracts = networkIObject.luportContractsInterface.get
     val boxData = typeBox match {
       case "linkList" =>
         ("linkList", gatewayAddresses.linkListAddress, LUPortContracts.linkListTokenId)
@@ -76,7 +71,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
           newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue - amount)
         }
 
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(gatewayAddresses.maintainerAddress).getErgoAddress.script))
+        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.maintainerAddress).getErgoAddress.script))
         newTokenRepoBox.build()
       })
     }
@@ -110,7 +105,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
         var newTokenRepoBox = txB.outBoxBuilder()
         newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue + Configs.signalBoxValue)
         newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(lastRepoBox.getTokens.get(0).getId, lastRepoBox.getTokens.get(0).getValue + 1))
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(gatewayAddresses.tokenRepoAddress).getErgoAddress.script))
+        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.tokenRepoAddress).getErgoAddress.script))
         newTokenRepoBox.build()
       })
     }
@@ -150,7 +145,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
 
   def getLinkListElements: ListBuffer[Map[String, String]] = {
     val boxData =
-      ("linkListElement", gatewayAddresses.linkListElementAddress, LUPortContracts.linkListElementTokenId)
+      ("linkListElement", networkIObject.luportContractsInterface.get.linkListElementAddress, LUPortContracts.linkListElementTokenId)
     val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
       .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
     val data = ListBuffer[Map[String, String]]()
