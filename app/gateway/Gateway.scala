@@ -17,15 +17,9 @@ import javax.inject.Inject
 class  Gateway @Inject()(utils: Utils, networkIObject: NetworkIObject, luPort: LUPort, ibPort: IBPort){
 
   private val logger: Logger = Logger(this.getClass)
-  var gatewayAddresses: GatewayContracts = _
-
-  def this(utils: Utils, networkIObject: NetworkIObject,
-           gatewayAddresses: GatewayContracts, luPort: LUPort, ibPort: IBPort ) = {
-    this(utils, networkIObject, luPort, ibPort)
-    this.gatewayAddresses = networkIObject.gatewayContractsInterface.get
-  }
 
   def getSignalList(): List[InputBox] = {
+    val gatewayAddresses = networkIObject.gatewayContractsInterface.get
     val boxData = ("signal", gatewayAddresses.signalAddress, LUPortContracts.tokenRepoTokenId)
 
     networkIObject.getUnspentBox(Address.create(boxData._2))
