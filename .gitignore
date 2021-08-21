@@ -7,6 +7,8 @@ tmp
 .history
 dist
 /.idea
+/.vscode
+/.metals
 /*.iml
 /out
 /.idea_modules
