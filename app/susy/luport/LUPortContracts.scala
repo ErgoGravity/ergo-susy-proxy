@@ -1,26 +1,17 @@
-package luportGateway
+package susy.luport
 
 import helpers.Configs
 import org.ergoplatform.appkit._
 import scorex.crypto.hash.Digest32
 import sigmastate.Values.ErgoTree
 
-object LUPortContracts {
-  lazy val linkListTokenId: String = ""
-  lazy val linkListRepoTokenId: String = ""
-  lazy val maintainerTokenId: String = ""
-  lazy val maintainerRepoTokenId: String = ""
-  lazy val linkListElementTokenId: String = ""
-  lazy val tokenRepoTokenId: String = "fd87d089c2945cfdec4551bc6e846c869ca5ef7e2f7790631fc6afeb708126e5"
-}
 
 class LUPortContracts(ctx: BlockchainContext) {
 
   var linkListAddress: String = _
   var maintainerAddress: String = _
   var linkListElementAddress: String = _
-  var tokenRepoAddress: String = _
-  var signalAddress: String = _
+
   /**
    * inputs in CreateTransferWrapRq: 0-> linkListTokenRepo, 1-> maintainerRepo
    * outputs in CreateTransferWrapRq: 0-> linkListTokenRepo, 1-> linkListElementRepo , 2-> maintainerRepo
@@ -31,7 +22,7 @@ class LUPortContracts(ctx: BlockchainContext) {
    * inputs in Unlock: 0-> Signal, 1-> Signal forced input, 2-> maintainerRepo
    * outputs in Unlock: 0-> Signal forced output (tokenRepo), 1-> maintainerRepo, 2-> receiver
    */
-  lazy val linkListRepoScript =
+  lazy val linkListRepoScript: String =
     s"""{
        |  val check = {
        |    if (INPUTS(0).tokens(1)._1 == linkListNFTToken){ // create Transfer wrap request
@@ -69,7 +60,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |
        |  sigmaProp (check)
        |}""".stripMargin
-  lazy val maintainerRepoScript =
+  lazy val maintainerRepoScript: String =
     s"""{
        |val storeInMaintainer = {(v: ((Box, Box), BigInt )) => {
        |    if (v._1._1.tokens.size > 1){
@@ -148,7 +139,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |}
        |  sigmaProp (check)
        |}""".stripMargin
-  lazy val linkListElementScript =
+  lazy val linkListElementScript: String =
     s"""{
        |  val check = {
        |    if (INPUTS(0).tokens(1)._1 == linkListNFTToken){ // create Transfer wrap request
@@ -186,10 +177,10 @@ class LUPortContracts(ctx: BlockchainContext) {
   lazy val linkListElementContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
       .item("minValue", 1000000L)
-      .item("linkListTokenRepoId", ErgoId.create(LUPortContracts.linkListRepoTokenId).getBytes)
-      .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
-      .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
+      .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
+      .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)
       .build(),
     linkListElementScript
   )
@@ -198,10 +189,10 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("linkListTokenRepoId", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
-      .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
+      .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
+      .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)
       .item("minValue", 1000000L)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
@@ -210,11 +201,11 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val maintainerRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("maintainerNFTToken", ErgoId.create(LUPortContracts.maintainerTokenId).getBytes)
-      .item("maintainerRepoId", ErgoId.create(LUPortContracts.maintainerRepoTokenId).getBytes)
-      .item("linkListTokenRepoId", ErgoId.create(LUPortContracts.linkListRepoTokenId).getBytes)
-      .item("linkListNFTToken", ErgoId.create(LUPortContracts.linkListTokenId).getBytes)
-      .item("signalTokenNFT", ErgoId.create(LUPortContracts.tokenRepoTokenId).getBytes)
+      .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
+      .item("maintainerRepoId", ErgoId.create(Configs.swTokenId).getBytes)
+      .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
+      .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
+      .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
     maintainerRepoScript

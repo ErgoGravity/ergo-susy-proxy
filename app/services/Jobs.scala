@@ -2,25 +2,22 @@ package services
 
 import akka.actor.{Actor, ActorLogging, Props, ActorSystem}
 import play.api.Logger
-import gateway.Gateway
-import play.api.libs.json.{JsValue, Json}
-
-import scala.util.Try
+import susy.susy
 
 object Jobs {
-  def props(gateway: Gateway)(implicit system: ActorSystem): Props =
-    Props.create(classOf[Jobs], gateway)
+  def props(susy: susy)(implicit system: ActorSystem): Props =
+    Props.create(classOf[Jobs], susy)
 
   val handleActions = "handle actions"
 }
 
-class Jobs(gateway: Gateway) extends Actor with ActorLogging {
+class Jobs(susy: susy) extends Actor with ActorLogging {
   private val logger: Logger = Logger(this.getClass)
 
 
-  def receive = {
+  def receive: Receive = {
     case Jobs.handleActions =>
       logger.info("Handling actions proposals...")
-      gateway.attachData()
+      susy.attachData()
   }
 }

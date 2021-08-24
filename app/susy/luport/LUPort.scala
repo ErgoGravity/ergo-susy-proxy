@@ -1,20 +1,18 @@
-package ibportGateway
+package susy.luport
 
-import javax.inject.Inject
-import play.api.Logger
-
-import java.security.SecureRandom
-import helpers.{Configs, Utils}
+import helpers.Configs
 import network.NetworkIObject
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{Address, ErgoToken, ErgoType, ErgoValue, InputBox, JavaHelpers, OutBox}
+import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
+import play.api.Logger
+import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 import special.collection.Coll
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
+import java.security.SecureRandom
+import javax.inject.Inject
 
-class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
-
+class LUPort @Inject()(networkIObject: NetworkIObject) {
   private val logger: Logger = Logger(this.getClass)
 
   private def selectRandomBox(seq: Seq[InputBox]): Option[InputBox] = {
@@ -23,16 +21,18 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
   }
 
   private def getSpecBox(typeBox: String, random: Boolean = false): InputBox = {
-    val gatewayAddresses: IBPortContracts = networkIObject.ibportContractsInterface.get
+    val gatewayAddresses: LUPortContracts = networkIObject.luportContractsInterface.get
     val boxData = typeBox match {
       case "linkList" =>
-        ("linkList", gatewayAddresses.linkListAddress, IBPortContracts.linkListTokenId)
+        ("linkList", gatewayAddresses.linkListAddress, Configs.luportLinklistTokenId)
       case "maintainer" =>
-        ("maintainer", gatewayAddresses.maintainerAddress, IBPortContracts.maintainerTokenId)
+        ("maintainer", gatewayAddresses.maintainerAddress, Configs.luportMaintainerTokenId)
       case "linkListElement" =>
-        ("linkListElement", gatewayAddresses.linkListElementAddress, IBPortContracts.linkListElementTokenId)
+        ("linkListElement", gatewayAddresses.linkListElementAddress, Configs.luportLinklistRepoTokenId)
       case "proxy" =>
         ("proxy", Configs.proxyAddress.getErgoAddress.toString, "")
+      case "tokenRepo" =>
+        ("tokenRepo", Configs.tokenRepoAddress, Configs.tokenRepoTokenId)
     }
 
     val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
@@ -48,9 +48,8 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
 
   // TODO: approve function must be implemented
 
-  def mint(signalBox: InputBox): Unit = {
+  def unlock(signalBox: InputBox): Unit = {
     val maintainerBox = getSpecBox("maintainer")
-    val linkListElementBox = getSpecBox("linkListElement")
     val lastOracleBox = getSpecBox("oracle")
     val tokenRepoBox = getSpecBox("tokenRepo", random = true)
     val proxyBox = getSpecBox("proxy", random = true)
@@ -72,7 +71,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
           newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue - amount)
         }
 
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
+        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.maintainerAddress).getErgoAddress.script))
         newTokenRepoBox.build()
       })
     }
@@ -80,9 +79,9 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
     def createReceiverBox(signalBox: InputBox, maintainerBox: InputBox): OutBox = {
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
       val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = data.slice(32, 65).toString().toLong
+      var amount = data.slice(33, 65).toString().toLong
       amount = amount + fee * amount / 10000
-      val receiver = data.toArray.drop(65).toString
+      val receiver = data.slice(66, data.size).toString
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
         var newTokenRepoBox = txB.outBoxBuilder()
@@ -106,7 +105,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
         var newTokenRepoBox = txB.outBoxBuilder()
         newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue + Configs.signalBoxValue)
         newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(lastRepoBox.getTokens.get(0).getId, lastRepoBox.getTokens.get(0).getValue + 1))
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.tokenRepoAddress).getErgoAddress.script))
+        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(Configs.tokenRepoAddress).getErgoAddress.script))
         newTokenRepoBox.build()
       })
     }
@@ -138,7 +137,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
       val signed = prover.sign(tx)
       logger.debug(s"pulseTx data ${signed.toJson(false)}")
       val pulseTxId = ctx.sendTransaction(signed)
-      logger.info(s"sending pulse tx ${pulseTxId}")
+      logger.info(s"sending pulse tx $pulseTxId")
       pulseTxId
     })
   }
@@ -146,10 +145,10 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
 
   def getLinkListElements: ListBuffer[Map[String, String]] = {
     val boxData =
-      ("linkListElement", networkIObject.ibportContractsInterface.get.linkListElementAddress, IBPortContracts.linkListElementTokenId)
+      ("linkListElement", networkIObject.luportContractsInterface.get.linkListElementAddress, Configs.luportLinklistRepoTokenId)
     val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
       .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
-    var data = ListBuffer[Map[String, String]]()
+    val data = ListBuffer[Map[String, String]]()
     for (box <- boxes) {
       val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toString()
       val amount = box.getRegisters.get(0).getValue.asInstanceOf[BigInt].toString()
@@ -159,6 +158,5 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
       data += value
     }
     data
-
   }
 }

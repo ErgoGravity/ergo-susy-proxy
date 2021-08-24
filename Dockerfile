@@ -10,7 +10,7 @@ COPY build.sbt /susy/proxy/
 
 WORKDIR /susy/proxy/
 RUN sbt assembly
-RUN mv `find . -name susyproxy-*.jar` /susy-proxy.jar
+RUN mv `find . -name *susyproxy-*.jar` /susy-proxy.jar
 CMD ["java", "-jar", "/susy-proxy.jar"]
 
 FROM openjdk:8-jre-slim
