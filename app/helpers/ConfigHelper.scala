@@ -16,8 +16,9 @@ trait ConfigHelper {
    */
   def readKey(key: String, default: String = null): String = {
     try {
-      if (config.has(key)) config.getOptional[String](key).getOrElse(default)
-      else throw config.reportError(key, s"${key} is required.")
+      if (default != null && !config.has(key)) return default
+      if (config.has(key) && config.getOptional[String](key).getOrElse(default).nonEmpty) config.getOptional[String](key).getOrElse(default)
+      else throw config.reportError(key, s"$key is required.")
     } catch {
       case ex: Throwable =>
         logger.error(ex.getMessage)
@@ -32,7 +33,7 @@ trait ConfigHelper {
         if (!ip.startsWith("http")) "http://" + ip
         else ip
       })
-      else throw config.reportError(key, s"${key} is required.")
+      else throw config.reportError(key, s"$key is required.")
     } catch {
       case ex: Throwable =>
         logger.error(ex.getMessage)

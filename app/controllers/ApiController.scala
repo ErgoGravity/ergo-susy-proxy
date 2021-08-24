@@ -2,12 +2,12 @@ package controllers
 
 import javax.inject._
 import network.NetworkIObject
-import ibportGateway.IBPort
-import luportGateway.LUPort
 import play.api.Logger
 import play.api.mvc._
 import helpers.Utils
 import play.api.libs.circe.Circe
+import susy.ibport.IBPort
+import susy.luport.LUPort
 
 import scala.concurrent.ExecutionContext
 

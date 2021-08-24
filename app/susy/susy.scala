@@ -1,26 +1,23 @@
-package gateway
+package susy
 
-import helpers.{Configs, Utils}
-import luportGateway.LUPortContracts
+import helpers.Configs
 import network.NetworkIObject
 import org.ergoplatform.appkit.{Address, InputBox}
 import play.api.Logger
 import special.collection.Coll
-import ibportGateway.IBPort
+import susy.ibport.IBPort
+import susy.luport.LUPort
 
-import luportGateway.LUPort
-
-import java.security.SecureRandom
 import javax.inject.Inject
 
 
-class  Gateway @Inject()(utils: Utils, networkIObject: NetworkIObject, luPort: LUPort, ibPort: IBPort){
+class susy @Inject()(networkIObject: NetworkIObject, luPort: LUPort, ibPort: IBPort) {
 
   private val logger: Logger = Logger(this.getClass)
 
-  def getSignalList(): List[InputBox] = {
-    val gatewayAddresses = networkIObject.gatewayContractsInterface.get
-    val boxData = ("signal", gatewayAddresses.signalAddress, LUPortContracts.tokenRepoTokenId)
+  // TODO: change the way of getting signal list
+  def getSignalList: List[InputBox] = {
+    val boxData = ("signal", Configs.signalAddress, Configs.tokenRepoTokenId)
 
     networkIObject.getUnspentBox(Address.create(boxData._2))
       .filter(box => box.getTokens.size() > 0 &&
@@ -28,7 +25,7 @@ class  Gateway @Inject()(utils: Utils, networkIObject: NetworkIObject, luPort: L
   }
 
   def attachData(): Unit = {
-    val signalList = getSignalList()
+    val signalList = getSignalList
     for (signal <- signalList) {
       val data = signal.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
       val action = data.slice(0, 1).toString()

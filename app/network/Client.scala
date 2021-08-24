@@ -1,12 +1,12 @@
 package network
 
-import gateway.GatewayContracts
 import helpers.Configs
-import ibportGateway.IBPortContracts
+
 import javax.inject.Inject
-import luportGateway.LUPortContracts
 import org.ergoplatform.appkit.RestApiErgoClient
 import play.api.Logger
+import susy.ibport.IBPortContracts
+import susy.luport.LUPortContracts
 
 
 class Client @Inject()(networkIObject: NetworkIObject) {
@@ -22,7 +22,6 @@ class Client @Inject()(networkIObject: NetworkIObject) {
     try {
       networkIObject.client = RestApiErgoClient.create(Configs.nodeUrl, Configs.networkType, Configs.nodeApiKey, Configs.explorerUrl)
       networkIObject.getCtxClient(implicit ctx => {
-        networkIObject.gatewayContractsInterface = Some(new GatewayContracts())
         networkIObject.luportContractsInterface = Some(new LUPortContracts(ctx))
         networkIObject.ibportContractsInterface = Some(new IBPortContracts(ctx))
         ctx.getHeight
