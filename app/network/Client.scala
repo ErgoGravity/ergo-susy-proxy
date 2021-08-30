@@ -20,7 +20,7 @@ class Client @Inject()(networkIObject: NetworkIObject) {
    */
   def setClient(): Long = {
     try {
-      networkIObject.client = RestApiErgoClient.create(Configs.nodeUrl, Configs.networkType, Configs.nodeApiKey, Configs.explorerUrl)
+      networkIObject.client = RestApiErgoClient.create(Configs.nodeUrl, Configs.networkType, "", Configs.explorerUrl)
       networkIObject.getCtxClient(implicit ctx => {
         networkIObject.luportContractsInterface = Some(new LUPortContracts(ctx))
         networkIObject.ibportContractsInterface = Some(new IBPortContracts(ctx))
