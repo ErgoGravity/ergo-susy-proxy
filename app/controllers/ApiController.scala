@@ -4,7 +4,8 @@ import javax.inject._
 import network.NetworkIObject
 import play.api.Logger
 import play.api.mvc._
-import helpers.Utils
+import io.circe.syntax._
+import helpers.{Configs, Utils}
 import play.api.libs.circe.Circe
 import susy.ibport.IBPort
 import susy.luport.LUPort
@@ -76,5 +77,67 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
     }
   }
 
+  def getIBPortDetails: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+    try {
+      networkIObject.getCtxClient(implicit ctx => {
+        val ibPortObject = networkIObject.ibportContractsInterface.get
+        val contractAddreses: Map[String, String] = Map(
+          "maintainerAddress" -> ibPortObject.maintainerAddress,
+          "linkListAddress" -> ibPortObject.linkListAddress,
+          "linkListElementAddress" -> ibPortObject.linkListElementAddress,
+          "signalAddress" -> Configs.signalAddress,
+          "tokenRepoAddress" -> Configs.tokenRepoAddress,
+        )
+
+        val tokenIds: Map[String, String] = Map(
+          "linklistRepoTokenId" -> Configs.ibportLinklistRepoTokenId,
+          "linklistTokenId" -> Configs.ibportLinklistTokenId,
+          "maintainerTokenId" -> Configs.ibportMaintainerTokenId,
+          "gwUSDNTokenId" -> Configs.ibportGWTokenId,
+          "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
+
+        Ok(
+          s"""{
+             |  "success": true,
+             |  "contractAddreses": ${contractAddreses.asJson},
+             |  "tokenIds": ${tokenIds.asJson}
+             |}""".stripMargin
+        ).as("application/json")
+      })
+    } catch {
+      case e: Throwable => exception(e)
+    }
+  }
+
+  def getLUPortDetails: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+    try {
+      networkIObject.getCtxClient(implicit ctx => {
+        val luPortObject = networkIObject.luportContractsInterface.get
+        val contractAddreses: Map[String, String] = Map(
+          "maintainerAddress" -> luPortObject.maintainerAddress,
+          "linkListAddress" -> luPortObject.linkListAddress,
+          "linkListElementAddress" -> luPortObject.linkListElementAddress,
+          "signalAddress" -> Configs.signalAddress,
+          "tokenRepoAddress" -> Configs.tokenRepoAddress,
+        )
+
+        val tokenIds: Map[String, String] = Map(
+          "linklistRepoTokenId" -> Configs.luportLinklistRepoTokenId,
+          "linklistTokenId" -> Configs.luportLinklistTokenId,
+          "maintainerTokenId" -> Configs.luportMaintainerTokenId,
+          "USDNTokenId" -> Configs.luportTokenId,
+          "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
+        Ok(
+          s"""{
+             |  "success": true,
+             |  "contractAddreses": ${contractAddreses.asJson},
+             |  "tokenIds": ${tokenIds.asJson}
+             |}""".stripMargin
+        ).as("application/json")
+      })
+    } catch {
+      case e: Throwable => exception(e)
+    }
+  }
 }
 

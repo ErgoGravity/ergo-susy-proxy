@@ -179,7 +179,7 @@ class LUPortContracts(ctx: BlockchainContext) {
       .item("minValue", 1000000L)
       .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
       .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
-      .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
+      .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)
       .build(),
     linkListElementScript
@@ -202,7 +202,7 @@ class LUPortContracts(ctx: BlockchainContext) {
   lazy val maintainerRepoContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
       .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
-      .item("maintainerRepoId", ErgoId.create(Configs.swTokenId).getBytes)
+      .item("maintainerRepoId", ErgoId.create(Configs.luportTokenId).getBytes)
       .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)

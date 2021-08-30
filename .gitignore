@@ -17,3 +17,5 @@ dist
 /RUNNING_PID
 /.settings
 .DS_Store
+application_*.conf
+reference_*.conf
