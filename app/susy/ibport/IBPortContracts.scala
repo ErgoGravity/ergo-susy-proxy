@@ -60,82 +60,86 @@ class IBPortContracts(ctx: BlockchainContext) {
        |  sigmaProp (check)
        |}""".stripMargin
   lazy val maintainerRepoScript: String =
-    s"""{
-       |val storeInMaintainer: Boolean = {(v: ((Box, Box), Long )) => {
-       |    if (v._1._1.tokens.size > 1){
-       |      allOf(Coll(
-       |          v._1._2.value == v._1._1.value,
-       |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
-       |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 + v._2
-       |      ))
-       |    }
-       |    else{
-       |       allOf(Coll(
-       |          v._1._2.value == v._1._1.value + v._2
-       |      ))
-       |    }
-       |  }}
-       |
-       |val mint: Boolean = {(v: ((Box, Box), (Box, Long))) => {
-       |  if (v._1._1.tokens.size > 1){
-       |      allOf(Coll(
-       |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
-       |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 - v._2._2,
-       |          v._1._2.value == v._1._1.value
-       |      ))
-       |    }
-       |    else{
-       |      allOf(Coll(
-       |          v._1._2.value == v._1._1.value - v._2._2
-       |      ))
-       |    }
-       |  }}
-       |
-       |val check = {
-       |
-       |  if (INPUTS(0).tokens(1)._1 == linkListNFTToken){ // create Transfer wrap request
-       |
-       |    val linkListTokenOutput = OUTPUTS(0)
-       |    val linkListElementOutput = OUTPUTS(1)
-       |    val maintainerOutput = OUTPUTS(2)
-       |
-       |    val amount = linkListElementOutput.R5[Long].get
-       |
-       |    allOf(Coll(
-       |      INPUTS(0).tokens(0)._1 == linkListTokenRepoId,
-       |      INPUTS(1).propositionBytes == SELF.propositionBytes,
-       |      INPUTS(1).id == SELF.id,
-       |
-       |      linkListTokenOutput.tokens(1)._1 == linkListNFTToken,
-       |      blake2b256(linkListElementOutput.propositionBytes) == linkListElementRepoContractHash,
-       |
-       |      maintainerOutput.propositionBytes == SELF.propositionBytes,
-       |      maintainerOutput.R4[Int].get == INPUTS(0).R4[Int].get,
-       |      storeInMaintainer(((INPUTS(1), maintainerOutput), amount)) == true
-       |    ))
-       |  }
-       |  else if (INPUTS(0).tokens(1)._1 == signalTokenNFT){ // Mint
-       |    val maintainerOutput = OUTPUTS(1)
-       |    val amount = INPUTS(2).R5[Long].get
-       |    val data = INPUTS(0).R5[Coll[Byte]].get
-       |    val receiver = data.slice(66, data.size)
-       |    allOf(Coll(
-       |      INPUTS(2).propositionBytes == SELF.propositionBytes,
-       |      INPUTS(2).id == SELF.id,
-       |
-       |      maintainerOutput.tokens(0)._1 == maintainerRepoId,
-       |      maintainerOutput.tokens(1)._1 == maintainerNFTToken,
-       |
-       |      OUTPUTS(2).tokens(0)._1 == maintainerRepoId,
-       |
-       |      mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
-       |      OUTPUTS(2).propositionBytes == receiver
-       |    ))
-       |  }
-       |  else false
-       |}
-       |  sigmaProp (check)
-       |}""".stripMargin
+      s"""{
+         |val storeInMaintainer: Boolean = {(v: ((Box, Box), Long )) => {
+         |    if (v._1._1.tokens.size > 1){
+         |      allOf(Coll(
+         |          v._1._2.value == v._1._1.value,
+         |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
+         |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 + v._2
+         |      ))
+         |    }
+         |    else{
+         |       allOf(Coll(
+         |          v._1._2.value == v._1._1.value + v._2
+         |      ))
+         |    }
+         |  }}
+         |
+         |val mint: Boolean = {(v: ((Box, Box), (Box, Long))) => {
+         |  if (v._1._1.tokens.size > 1){
+         |      allOf(Coll(
+         |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
+         |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 - v._2._2,
+         |          v._1._2.value == v._1._1.value
+         |      ))
+         |    }
+         |    else{
+         |      allOf(Coll(
+         |          v._1._2.value == v._1._1.value - v._2._2
+         |      ))
+         |    }
+         |  }}
+         |
+         |val check = {
+         |
+         |  if (INPUTS(0).tokens(1)._1 == linkListNFTToken){ // create Transfer wrap request
+         |
+         |    val linkListTokenOutput = OUTPUTS(0)
+         |    val linkListElementOutput = OUTPUTS(1)
+         |    val maintainerOutput = OUTPUTS(2)
+         |
+         |    val amount = linkListElementOutput.R5[Long].get
+         |
+         |    allOf(Coll(
+         |      INPUTS(0).tokens(0)._1 == linkListTokenRepoId,
+         |      INPUTS(1).propositionBytes == SELF.propositionBytes,
+         |      INPUTS(1).id == SELF.id,
+         |
+         |      linkListTokenOutput.tokens(1)._1 == linkListNFTToken,
+         |      blake2b256(linkListElementOutput.propositionBytes) == linkListElementRepoContractHash,
+         |
+         |      maintainerOutput.tokens(0)._1 == maintainerRepoId,
+         |      maintainerOutput.tokens(1)._1 == maintainerNFTToken,
+         |      maintainerOutput.propositionBytes == SELF.propositionBytes,
+         |      maintainerOutput.R4[Int].get == INPUTS(1).R4[Int].get,
+         |      storeInMaintainer(((INPUTS(1), maintainerOutput), amount)) == true
+         |    ))
+         |  }
+         |  else if (INPUTS(0).tokens(1)._1 == signalTokenNFT){ // Mint
+         |    val maintainerOutput = OUTPUTS(1)
+         |    val amount = INPUTS(2).R5[Long].get
+         |    val data = INPUTS(0).R5[Coll[Byte]].get
+         |    val receiver = data.slice(66, data.size)
+         |    allOf(Coll(
+         |      INPUTS(2).propositionBytes == SELF.propositionBytes,
+         |      INPUTS(2).id == SELF.id,
+         |
+         |      maintainerOutput.tokens(0)._1 == maintainerRepoId,
+         |      maintainerOutput.tokens(1)._1 == maintainerNFTToken,
+         |      maintainerOutput.propositionBytes == SELF.propositionBytes,
+         |      maintainerOutput.R4[Int].get == INPUTS(2).R4[Int].get,
+         |
+         |      OUTPUTS(2).tokens(0)._1 == maintainerRepoId,
+         |
+         |      mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
+         |      OUTPUTS(2).propositionBytes == receiver
+         |    ))
+         |  }
+         |  else false
+         |}
+         |  sigmaProp (check)
+         |}""".stripMargin
   lazy val linkListElementScript: String =
     s"""{
        |  val check = {
