@@ -2,14 +2,14 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
+GET        /                         controllers.ApiController.index
+GET        /height                   controllers.ApiController.height
+GET        /luport/getDetails        controllers.ApiController.getLUPortDetails
+GET        /ibport/getDetails        controllers.ApiController.getIBPortDetails
 
-GET        /height                  controllers.ApiController.height
-GET        /getLUPortDetails        controllers.ApiController.getLUPortDetails
-GET        /getIBPortDetails        controllers.ApiController.getIBPortDetails
-
-GET        /ibport/getState         controllers.ApiController.getibportState
-GET        /luport/getState         controllers.ApiController.getluportState
+GET        /ibport/getState          controllers.ApiController.getibportState
+GET        /luport/getState          controllers.ApiController.getluportState
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file            controllers.Assets.versioned(path="/public", file: Asset)
+GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
 

@@ -27,6 +27,23 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
   }
 
   /**
+   * @return current a text for root API
+   */
+  def index: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+    try {
+      Ok(
+        s"""{
+           |  "success": true,
+           |  "message": "Ergo Susy Proxy"
+           |}""".stripMargin
+      ).as("application/json")
+
+    } catch {
+      case e: Throwable => exception(e)
+    }
+  }
+
+  /**
    * @return current height of the blockchain
    */
   def height: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
@@ -93,7 +110,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linklistRepoTokenId" -> Configs.ibportLinklistRepoTokenId,
           "linklistTokenId" -> Configs.ibportLinklistTokenId,
           "maintainerTokenId" -> Configs.ibportMaintainerTokenId,
-          "gwUSDNTokenId" -> Configs.ibportGWTokenId,
+          "gwTokenId" -> Configs.ibportGWTokenId,
           "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
 
         Ok(
@@ -125,7 +142,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linklistRepoTokenId" -> Configs.luportLinklistRepoTokenId,
           "linklistTokenId" -> Configs.luportLinklistTokenId,
           "maintainerTokenId" -> Configs.luportMaintainerTokenId,
-          "USDNTokenId" -> Configs.luportTokenId,
+          "tokenId" -> Configs.luportTokenId,
           "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
         Ok(
           s"""{
