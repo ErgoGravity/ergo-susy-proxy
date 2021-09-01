@@ -62,7 +62,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |}""".stripMargin
   lazy val maintainerRepoScript: String =
     s"""{
-       |val storeInMaintainer = {(v: ((Box, Box), BigInt )) => {
+       |val storeInMaintainer = {(v: ((Box, Box), Long )) => {
        |    if (v._1._1.tokens.size > 1){
        |      allOf(Coll(
        |          v._1._2.value == v._1._1.value,
@@ -77,7 +77,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |    }
        |  }}
        |
-       |val unlock: Boolean = {(v: ((Box, Box), (Box, BigInt))) => {
+       |val unlock: Boolean = {(v: ((Box, Box), (Box, Long))) => {
        |  if (v._1._1.tokens.size > 1){
        |    allOf(Coll(
        |      v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
@@ -101,7 +101,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |    val maintainerOutput = OUTPUTS(2)
        |
        |    val fee = INPUTS(1).R4[Int].get
-       |    val amount = linkListElementOutput.R5[BigInt].get + fee * linkListElementOutput.R5[BigInt].get / 10000
+       |    val amount = linkListElementOutput.R5[Long].get + fee * linkListElementOutput.R5[Long].get / 10000
        |
        |    allOf(Coll(
        |      INPUTS(0).tokens(0)._1 == linkListTokenRepoId,
@@ -119,7 +119,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |  else if (INPUTS(0).tokens(1)._1 == signalTokenNFT){ // unlock
        |    val maintainerOutput = OUTPUTS(1)
        |    val fee = INPUTS(2).R4[Int].get
-       |    val amount = INPUTS(2).R5[BigInt].get + fee * INPUTS(2).R5[BigInt].get / 10000
+       |    val amount = INPUTS(2).R5[Long].get + fee * INPUTS(2).R5[Long].get / 10000
        |    val data = INPUTS(0).R5[Coll[Byte]].get
        |    val receiver = data.slice(66, data.size)
        |    allOf(Coll(
@@ -155,8 +155,8 @@ class LUPortContracts(ctx: BlockchainContext) {
        |        linkListElementOutput.tokens(0)._1 == linkListTokenRepoId,
        |        linkListElementOutput.tokens(0)._2 == 1,
        |        linkListElementOutput.R4[Coll[Byte]].isDefined, // receiver address
-       |        linkListElementOutput.R5[BigInt].isDefined, // request amount
-       |        linkListElementOutput.R6[BigInt].isDefined, // request id
+       |        linkListElementOutput.R5[Long].isDefined, // request amount
+       |        linkListElementOutput.R6[Long].isDefined, // request id
        |        linkListElementOutput.value == minValue,
        |
        |        OUTPUTS(2).tokens(1)._1 == maintainerNFTToken
