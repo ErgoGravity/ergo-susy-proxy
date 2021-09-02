@@ -56,7 +56,7 @@ class IBPort @Inject()(networkIObject: NetworkIObject) {
 
     def createMaintainerBox(lastRepoBox: InputBox): OutBox = {
       val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = lastRepoBox.getRegisters.get(5).getValue.asInstanceOf[Int]
+      var amount = lastRepoBox.getRegisters.get(5).getValue.asInstanceOf[Long]
       amount = amount + fee * amount / 10000
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
@@ -151,8 +151,8 @@ class IBPort @Inject()(networkIObject: NetworkIObject) {
     val data = ListBuffer[Map[String, String]]()
     for (box <- boxes) {
       val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toString()
-      val amount = box.getRegisters.get(0).getValue.asInstanceOf[BigInt].toString()
-      val requestId = box.getRegisters.get(0).getValue.asInstanceOf[BigInt].toString()
+      val amount = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
+      val requestId = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
 
       val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
       data += value
