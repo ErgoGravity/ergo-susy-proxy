@@ -61,23 +61,23 @@ class IBPortContracts(ctx: BlockchainContext) {
        |}""".stripMargin
   lazy val maintainerRepoScript: String =
     s"""{
-       |val storeInMaintainer: Boolean = {(v: ((Box, Box), Long )) => {
-       |    if (v._1._1.tokens(1)._2 > 1){
+       |val storeInMaintainer = {(v: ((Box, Box), (Int, Long) )) => {
+       |    if (v._1._1.tokens.size > 1){
        |      allOf(Coll(
        |          v._1._2.value == v._1._1.value,
        |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
-       |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 + v._2
+       |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 + v._2._2
        |      ))
        |    }
        |    else{
        |       allOf(Coll(
-       |          v._1._2.value == v._1._1.value + v._2
+       |          v._1._2.value == v._1._1.value + v._2._2
        |      ))
        |    }
        |  }}
        |
        |val mint: Boolean = {(v: ((Box, Box), (Box, Long))) => {
-       |  if (v._1._1.tokens(1)._2 > 1){
+       |  if (v._1._1.tokens.size > 1){
        |      allOf(Coll(
        |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
        |          v._1._2.tokens(1)._2 == v._1._1.tokens(1)._2 - v._2._2,
@@ -99,6 +99,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |    val linkListElementOutput = OUTPUTS(1)
        |    val maintainerOutput = OUTPUTS(2)
        |
+       |    val fee = INPUTS(1).R4[Int].get
        |    val amount = linkListElementOutput.R5[Long].get
        |
        |    allOf(Coll(
@@ -113,7 +114,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |      maintainerOutput.tokens(0)._1 == maintainerNFTToken,
        |      maintainerOutput.propositionBytes == SELF.propositionBytes,
        |      maintainerOutput.R4[Int].get == INPUTS(1).R4[Int].get,
-       |      storeInMaintainer(((INPUTS(1), maintainerOutput), amount)) == true
+       |      storeInMaintainer(((INPUTS(1), maintainerOutput), (fee, amount))) == true
        |    ))
        |  }
        |  else if (INPUTS(0).tokens(0)._1 == signalTokenNFT){ // Mint
