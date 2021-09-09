@@ -150,9 +150,9 @@ class IBPort @Inject()(networkIObject: NetworkIObject) {
       .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
     val data = ListBuffer[Map[String, String]]()
     for (box <- boxes) {
-      val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toString()
-      val amount = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
-      val requestId = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
+      val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toString
+      val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
+      val requestId = box.getRegisters.get(2).getValue.asInstanceOf[Long].toString
 
       val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
       data += value
