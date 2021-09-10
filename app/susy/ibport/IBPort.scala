@@ -144,7 +144,6 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
 
 
   def getLinkListElements: ListBuffer[Map[String, String]] = {
-    //    ListBuffer[Map[String, String]]
     try {
       val boxData =
         ("linkListElement", networkIObject.ibportContractsInterface.get.linkListElementAddress, Configs.ibportLinklistRepoTokenId)
