@@ -19,3 +19,5 @@ dist
 .DS_Store
 application_*.conf
 reference_*.conf
+.gradle/
+*.7z

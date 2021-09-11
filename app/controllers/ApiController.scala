@@ -68,7 +68,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
       Ok(
         s"""{
            |  "success": true,
-           |  "state": ${ibport.getLinkListElements}
+           |  "state": ${ibport.getLinkListElements.asJson}
            |}""".stripMargin
       ).as("application/json")
 
@@ -85,7 +85,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
       Ok(
         s"""{
            |  "success": true,
-           |  "state": ${luport.getLinkListElements}
+           |  "state": ${luport.getLinkListElements.asJson}
            |}""".stripMargin
       ).as("application/json")
 

@@ -4,7 +4,7 @@ import javax.inject.Inject
 import play.api.Logger
 
 import java.security.SecureRandom
-import helpers.Configs
+import helpers.{Configs, Utils}
 import network.NetworkIObject
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
@@ -13,7 +13,7 @@ import special.collection.Coll
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-class IBPort @Inject()(networkIObject: NetworkIObject) {
+class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
 
   private val logger: Logger = Logger(this.getClass)
 
@@ -144,20 +144,24 @@ class IBPort @Inject()(networkIObject: NetworkIObject) {
 
 
   def getLinkListElements: ListBuffer[Map[String, String]] = {
-    val boxData =
-      ("linkListElement", networkIObject.ibportContractsInterface.get.linkListElementAddress, Configs.ibportLinklistRepoTokenId)
-    val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
-      .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
-    val data = ListBuffer[Map[String, String]]()
-    for (box <- boxes) {
-      val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toString()
-      val amount = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
-      val requestId = box.getRegisters.get(0).getValue.asInstanceOf[Long].toString()
+    try {
+      val boxData =
+        ("linkListElement", networkIObject.ibportContractsInterface.get.linkListElementAddress, Configs.ibportLinklistRepoTokenId)
+      val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
+        .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
+      val data = ListBuffer[Map[String, String]]()
+      for (box <- boxes) {
+        val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+        val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
+        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[Long].toString
 
-      val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
-      data += value
+        val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
+        data += value
+      }  
+      data
     }
-    data
-
+    catch {
+      case e: Exception => throw e
+    }
   }
 }
