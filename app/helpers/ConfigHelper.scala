@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import play.api.{Configuration, Logger}
 
 trait ConfigHelper {
+
   val config: Configuration = Configuration(ConfigFactory.load())
   private val logger: Logger = Logger(this.getClass)
 
