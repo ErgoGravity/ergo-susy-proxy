@@ -153,7 +153,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
       for (box <- boxes) {
         val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[Long].toString
+        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
 
         val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
         data += value
@@ -162,6 +162,23 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
     }
     catch {
       case e: Exception => throw e
+    }
+  }
+
+  def getRequest(requestId: String): Map[String, String] = {
+    println(requestId)
+    try {
+      val boxes = networkIObject.getUnspentBox(Address.create(networkIObject.luportContractsInterface.get.linkListElementAddress))
+      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString == requestId ).head
+      val boxReceiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+      val boxAmount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
+      val boxRequestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
+      Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
+    }catch {
+      case e: Exception => {
+        println(e)
+        Map("requestId" -> "", "amount" -> "", "receiver" -> "")
+      }
     }
   }
 }

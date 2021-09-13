@@ -9,6 +9,8 @@ import helpers.{Configs, Utils}
 import play.api.libs.circe.Circe
 import susy.ibport.IBPort
 import susy.luport.LUPort
+import helpers.Utils
+import io.circe.Json
 
 import scala.concurrent.ExecutionContext
 
@@ -63,12 +65,12 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
   /**
    * @return current list of link list element of on ibport
    */
-  def getibportState: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+  def getIBPortRequestsList: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     try {
       Ok(
         s"""{
            |  "success": true,
-           |  "state": ${ibport.getLinkListElements.asJson}
+           |  "requests": ${ibport.getLinkListElements.asJson}
            |}""".stripMargin
       ).as("application/json")
 
@@ -80,12 +82,42 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
   /**
    * @return current list of link list element of on luport
    */
-  def getluportState: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+  def getLUPortRequestsList: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     try {
       Ok(
         s"""{
            |  "success": true,
-           |  "state": ${luport.getLinkListElements.asJson}
+           |  "requests": ${luport.getLinkListElements.asJson}
+           |}""".stripMargin
+      ).as("application/json")
+
+    } catch {
+      case e: Throwable => exception(e)
+    }
+  }
+
+  def getIBPortRequest: Action[Json] = Action(circe.json) { implicit request =>
+    val requestId = request.body.hcursor.downField("requestId").as[String].getOrElse(throw new Throwable("requestId field must exist"))
+    try {
+      Ok(
+        s"""{
+           |  "success": true,
+           |  "request": ${ibport.getRequest(requestId).asJson}
+           |}""".stripMargin
+      ).as("application/json")
+
+    } catch {
+      case e: Throwable => exception(e)
+    }
+  }
+
+  def getLUPortRequest: Action[Json] = Action(circe.json) { implicit request =>
+    val requestId = request.body.hcursor.downField("requestId").as[String].getOrElse(throw new Throwable("requestId field must exist"))
+    try {
+      Ok(
+        s"""{
+           |  "success": true,
+           |  "request": ${luport.getRequest(requestId).asJson}
            |}""".stripMargin
       ).as("application/json")
 

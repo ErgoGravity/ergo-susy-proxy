@@ -158,7 +158,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |       linkListElementOutput.tokens(0)._2 == 1,
        |       linkListElementOutput.R4[Coll[Byte]].isDefined, // receiver address
        |       linkListElementOutput.R5[Long].isDefined, // request amount
-       |       linkListElementOutput.R6[Long].isDefined, // request id
+       |       linkListElementOutput.R6[BigInt].isDefined, // request id
        |       linkListElementOutput.value == minValue,
        |
        |       OUTPUTS(2).tokens(0)._1 == maintainerNFTToken

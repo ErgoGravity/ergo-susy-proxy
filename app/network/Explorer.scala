@@ -2,7 +2,10 @@ package network
 
 import helpers.Configs
 import io.circe.Json
+import io.circe.generic.codec.DerivedAsObjectCodec.deriveCodec
 import io.circe.parser.parse
+import org.ergoplatform.appkit.{Address, InputBox}
+
 import javax.inject.Singleton
 import scalaj.http.{BaseHttp, HttpConstants}
 
@@ -14,6 +17,7 @@ class Explorer() {
   private val baseUrlV1 = s"${Configs.explorerUrl}/api/v1"
   private val tx = s"$baseUrlV0/transactions"
   private val unconfirmedTx = s"$baseUrlV0/transactions/unconfirmed"
+  private val getBoxes = s"$baseUrlV1/boxes/byAddress"
 
   /**
    * @param txId transaction id
@@ -38,6 +42,17 @@ class Explorer() {
   }
 
   /**
+   * @param address contract address
+   * @return list of all spent and unspent boxes
+   */
+  def getBoxes(address: String): Json = try {
+    GetRequest.httpGet(s"$getBoxes/$address")
+  }
+  catch {
+    case _: Throwable => Json.Null
+  }
+
+  /**
    * @param txId transaction id
    * @return -1 if tx does not exist, 0 if it is unconfirmed, otherwise, confirmation num
    */
@@ -52,19 +67,23 @@ class Explorer() {
     }
   }
 
+
+
 }
 
-object GetRequest{
-  object GravityHttp extends BaseHttp (None, HttpConstants.defaultOptions, HttpConstants.utf8, 4096, "Mozilla/5.0 (X11; OpenBSD amd64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.36",
-  true
+object GetRequest {
+  object GravityHttp extends BaseHttp(None, HttpConstants.defaultOptions, HttpConstants.utf8, 4096, "Mozilla/5.0 (X11; OpenBSD amd64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.36",
+    true
   )
+
   private val defaultHeader: Seq[(String, String)] = Seq[(String, String)](("Accept", "application/json"))
+
   def httpGetWithError(url: String, headers: Seq[(String, String)] = defaultHeader): Either[Throwable, Json] = {
     Try {
       val responseReq = GravityHttp(url).headers(defaultHeader).asString
       (responseReq.code, responseReq)
     }
-    match{
+    match {
       case Success((200, responseReq)) => parse(responseReq.body)
       case Success((responseHttpCode, responseReq)) => Left(new Exception(s"returned a error with http code $responseHttpCode and error ${responseReq.throwError}"))
       case Failure(exception) => Left(exception)

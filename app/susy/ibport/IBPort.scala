@@ -5,7 +5,8 @@ import play.api.Logger
 
 import java.security.SecureRandom
 import helpers.{Configs, Utils}
-import network.NetworkIObject
+import io.circe.{Json => ciJson}
+import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
 import special.collection.Coll
@@ -13,7 +14,7 @@ import special.collection.Coll
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
+class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: Explorer) {
 
   private val logger: Logger = Logger(this.getClass)
 
@@ -153,15 +154,41 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
       for (box <- boxes) {
         val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[Long].toString
+        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
 
         val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
         data += value
-      }  
+      }
       data
     }
     catch {
       case e: Exception => throw e
+    }
+  }
+
+  def getRequest(requestId: String): Map[String, String] = {
+    try {
+      networkIObject.getCtxClient(implicit ctx => {
+        val linkListElementBoxes = explorer.getBoxes(networkIObject.ibportContractsInterface.get.linkListElementAddress)
+        val linkListElementBoxId = linkListElementBoxes.hcursor.downField("items").as[List[ciJson]].getOrElse(null)
+          .filter(_.hcursor.downField("additionalRegisters").as[ciJson].getOrElse(null)
+            .hcursor.downField("R6").as[BigInt].getOrElse(null).toString == requestId).head
+          .hcursor.downField("boxId").as[String].getOrElse("")
+
+        if (linkListElementBoxId != "") {
+          val linkListElementBox = ctx.getBoxesById(linkListElementBoxId).head
+          val boxReceiver = utils.toHexString(linkListElementBox.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+          val boxAmount = linkListElementBox.getRegisters.get(1).getValue.asInstanceOf[Long].toString
+          val boxRequestId = linkListElementBox.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
+
+          Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
+        }
+        else {
+          Map("requestId" -> "", "amount" -> "", "receiver" -> "")
+        }
+      })
+    } catch {
+      case e: Exception => Map("requestId" -> "", "amount" -> "", "receiver" -> "")
     }
   }
 }
