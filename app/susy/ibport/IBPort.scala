@@ -172,7 +172,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         val linkListElementBoxes = explorer.getBoxes(networkIObject.ibportContractsInterface.get.linkListElementAddress)
         val linkListElementBoxId = linkListElementBoxes.hcursor.downField("items").as[List[ciJson]].getOrElse(null)
           .filter(_.hcursor.downField("additionalRegisters").as[ciJson].getOrElse(null)
-            .hcursor.downField("R6").as[BigInt].getOrElse(null).toString == requestId).head
+            .hcursor.downField("R6").as[ciJson].getOrElse(null).hcursor.downField("renderedValue").as[BigInt].getOrElse(null).toString == requestId).head
           .hcursor.downField("boxId").as[String].getOrElse("")
 
         if (linkListElementBoxId != "") {
@@ -188,7 +188,10 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         }
       })
     } catch {
-      case e: Exception => Map("requestId" -> "", "amount" -> "", "receiver" -> "")
+      case e: Exception => {
+        println(e)
+        Map("requestId" -> "", "amount" -> "", "receiver" -> "")
+      }
     }
   }
 }

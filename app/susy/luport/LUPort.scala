@@ -1,10 +1,12 @@
 package susy.luport
 
 import helpers.{Configs, Utils}
-import network.NetworkIObject
+import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
 import play.api.Logger
+import io.circe.{Json => ciJson}
+
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import special.collection.Coll
@@ -12,7 +14,7 @@ import special.collection.Coll
 import java.security.SecureRandom
 import javax.inject.Inject
 
-class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
+class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: Explorer) {
   private val logger: Logger = Logger(this.getClass)
 
   private def selectRandomBox(seq: Seq[InputBox]): Option[InputBox] = {
@@ -169,12 +171,12 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject) {
     println(requestId)
     try {
       val boxes = networkIObject.getUnspentBox(Address.create(networkIObject.luportContractsInterface.get.linkListElementAddress))
-      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString == requestId ).head
+      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString == requestId).head
       val boxReceiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
       val boxAmount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
       val boxRequestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
       Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
-    }catch {
+    } catch {
       case e: Exception => {
         println(e)
         Map("requestId" -> "", "amount" -> "", "receiver" -> "")
