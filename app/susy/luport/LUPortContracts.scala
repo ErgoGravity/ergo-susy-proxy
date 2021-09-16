@@ -34,6 +34,9 @@ class LUPortContracts(ctx: BlockchainContext) {
        |        linkListTokenOutput.tokens(1)._1 == linkListTokenRepoId,
        |        linkListTokenOutput.tokens(1)._2 == INPUTS(0).tokens(1)._2 - 1,
        |        linkListTokenOutput.tokens(0)._1 == linkListNFTToken,
+       |        linkListTokenOutput.R4[BigInt].isDefined, // last request Id
+       |        linkListTokenOutput.R5[Int].isDefined, // nft count
+       |        linkListTokenOutput.R6[Int].isDefined, // nft number
        |        linkListTokenOutput.propositionBytes == SELF.propositionBytes,
        |        linkListTokenOutput.value == INPUTS(0).value - minValue,//TODO : check minvalue
        |        blake2b256(linkListElementOutput.propositionBytes) == linkListElementRepoContractHash,
