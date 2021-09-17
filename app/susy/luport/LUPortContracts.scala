@@ -184,7 +184,7 @@ class LUPortContracts(ctx: BlockchainContext) {
 
   lazy val linkListElementContract: ErgoContract = ctx.compileContract(
     ConstantsBuilder.create()
-      .item("minValue", 1000000L)
+      .item("minValue", Configs.defaultTxFee)
       .item("linkListTokenRepoId", ErgoId.create(Configs.luportLinklistRepoTokenId).getBytes)
       .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
       .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
@@ -201,7 +201,7 @@ class LUPortContracts(ctx: BlockchainContext) {
       .item("linkListNFTToken", ErgoId.create(Configs.luportLinklistTokenId).getBytes)
       .item("maintainerNFTToken", ErgoId.create(Configs.luportMaintainerTokenId).getBytes)
       .item("signalTokenNFT", ErgoId.create(Configs.tokenRepoTokenId).getBytes)
-      .item("minValue", 1000000L)
+      .item("minValue", Configs.defaultTxFee)
       .item("linkListElementRepoContractHash", linkListElementHash)
       .build(),
     linkListRepoScript
