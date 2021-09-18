@@ -49,6 +49,9 @@ class IBPortContracts(ctx: BlockchainContext) {
        |        linkListTokenOutput.tokens(1)._2 == INPUTS(2).tokens(1)._2 + 1,
        |        linkListTokenOutput.tokens(1)._1 == linkListTokenRepoId,
        |        linkListTokenOutput.tokens(0)._1 == linkListNFTToken,
+       |        linkListTokenOutput.R4[BigInt].isDefined, // last request Id
+       |        linkListTokenOutput.R5[Int].isDefined, // nft count
+       |        linkListTokenOutput.R6[Int].isDefined, // nft number
        |        linkListTokenOutput.propositionBytes == SELF.propositionBytes,
        |        linkListTokenOutput.value == INPUTS(2).value + minValue,
        |
@@ -123,8 +126,8 @@ class IBPortContracts(ctx: BlockchainContext) {
        |  else if (INPUTS(0).tokens(0)._1 == signalTokenNFT){ // Mint
        |    val maintainerOutput = OUTPUTS(1)
        |    val amount = INPUTS(2).R5[Long].get
-       |    val data = INPUTS(0).R5[Coll[Byte]].get
-       |    val receiver = data.slice(66, data.size)
+       |    //val data = INPUTS(0).R5[Coll[Byte]].get
+       |    //val receiver = data.slice(66, data.size)
        |    allOf(Coll(
        |      INPUTS(2).propositionBytes == SELF.propositionBytes,
        |      INPUTS(2).id == SELF.id,
@@ -137,7 +140,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |      OUTPUTS(2).tokens(1)._1 == maintainerRepoId,
        |
        |      mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
-       |      OUTPUTS(2).propositionBytes == receiver
+       |      //OUTPUTS(2).propositionBytes == receiver
        |    ))
        |  }
        |  else false
