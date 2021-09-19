@@ -153,7 +153,8 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
       val data = ListBuffer[Map[String, String]]()
       for (box <- boxes) {
-        val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+        val boxReceiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray
+        val receiver = (boxReceiver.map(_.toChar)).mkString
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
         val reqId = box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt]
         val requestId = JavaHelpers.SigmaDsl.toBigInteger(reqId).toString

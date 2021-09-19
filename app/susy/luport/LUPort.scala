@@ -154,7 +154,8 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         .filter(box => box.getTokens.size() > 0 && box.getTokens.get(0).getId.toString.equals(boxData._3))
       val data = ListBuffer[Map[String, String]]()
       for (box <- boxes) {
-        val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+        val boxReceiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray
+        val receiver = (boxReceiver.map(_.toChar)).mkString
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
         val reqId = box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt]
         val requestId = JavaHelpers.SigmaDsl.toBigInteger(reqId).toString
@@ -174,10 +175,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       val boxes = networkIObject.getUnspentBox(Address.create(networkIObject.luportContractsInterface.get.linkListElementAddress))
       val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt] == JavaHelpers.SigmaDsl.BigInt(BigInt(requestId).bigInteger)).head
       val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray
-      val boxReceiver = utils.toHexString(receiver)
-//      val recieverStr = (receiver.map(_.toChar)).mkString
-      val ergotree = utils.toHexString(Address.create("ZsS87XPqhyp74vbnNBqQXcEH99SU9iRV5Zcn1UNWQDehRP6WCgxfjQdrTgyKYLrCHUJRDkPhN1mSNGGSgKcKeNK7fWViWjqXSqzQKE2UPHsAcecoh3R25WVWEYncpiTevuvmhL2MoiDHnKJaP9pAgQf4vKaHs22nnnGgNPyqZN2AjRg6Jt8ReQ94vueoVatqyX67i2ZXzN2hjgvoPo5vftVpqoSgGcmG6sAMLNjhBbyi4ifvwXFVdTeXuBHPwLjv9VVK2q3xq6ebSKovjaJCZekSs7fgckCeumUy6f3JFxgQp7p8tDEzUf93WYfQdtnkhBYyNrmKrEsitPtEbguWHd7Cd9eCBwwRvETayRuUnpPaHMLFdih2Vxn4hehhzG8wjWKpGAwniGqYezhqKXYn4J9kf79ofd3BsYYHRftKwSaD6Vt117J4L8UahU4tCMemMUkSsvCYH9eqGsrB1fc2ZQiDrh7CaBxPvJTn8eDBCxdu64s41uJcmTgoMKVJYcot3maTCc").getErgoAddress.script.bytes)
-      println(ergotree)
+      val boxReceiver = (receiver.map(_.toChar)).mkString
       val boxAmount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
       val boxRequestId = requestId
       Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
