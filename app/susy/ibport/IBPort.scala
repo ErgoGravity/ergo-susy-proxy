@@ -5,7 +5,6 @@ import play.api.Logger
 
 import java.security.SecureRandom
 import helpers.{Configs, Utils}
-import io.circe.{Json => ciJson}
 import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBox}

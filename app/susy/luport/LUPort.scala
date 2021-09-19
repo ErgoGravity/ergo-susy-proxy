@@ -5,15 +5,11 @@ import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBox}
 import play.api.Logger
-import play.api.libs.json._
-
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import special.collection.Coll
-
 import java.security.SecureRandom
 import javax.inject.Inject
-import scala.util.control.Breaks.breakable
 
 class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: Explorer) {
   private val logger: Logger = Logger(this.getClass)
