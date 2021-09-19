@@ -8,7 +8,8 @@ import helpers.{Configs, Utils}
 import io.circe.{Json => ciJson}
 import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
+import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBox}
+import play.api.libs.json.{JsValue, Json}
 import special.collection.Coll
 
 import scala.collection.JavaConverters._
@@ -154,7 +155,8 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       for (box <- boxes) {
         val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
+        val reqId = box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt]
+        val requestId = JavaHelpers.SigmaDsl.toBigInteger(reqId).toString
 
         val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
         data += value
@@ -169,18 +171,24 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
   def getRequest(requestId: String): Map[String, String] = {
     try {
       networkIObject.getCtxClient(implicit ctx => {
-        val linkListElementBoxes = explorer.getBoxes(networkIObject.ibportContractsInterface.get.linkListElementAddress)
-        val linkListElementBoxId = linkListElementBoxes.hcursor.downField("items").as[List[ciJson]].getOrElse(null)
-          .filter(_.hcursor.downField("additionalRegisters").as[ciJson].getOrElse(null)
-            .hcursor.downField("R6").as[ciJson].getOrElse(null).hcursor.downField("renderedValue").as[BigInt].getOrElse(null).toString == requestId).head
-          .hcursor.downField("boxId").as[String].getOrElse("")
-
-        if (linkListElementBoxId != "") {
-          val linkListElementBox = ctx.getBoxesById(linkListElementBoxId).head
-          val boxReceiver = utils.toHexString(linkListElementBox.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
-          val boxAmount = linkListElementBox.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-          val boxRequestId = linkListElementBox.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
-
+        val linkListElementBoxes = Json.parse(explorer.getBoxes(networkIObject.ibportContractsInterface.get.linkListElementAddress).toString())
+        val linkListElementBoxList = (linkListElementBoxes \ "items").as[List[JsValue]]
+        println(linkListElementBoxList)
+        var linkListElementBoxMap: Map[String, JsValue] = Map()
+        linkListElementBoxList.foreach(txJson => {
+          val registers = (txJson \ "additionalRegisters").as[JsValue]
+          val reqId = ((registers \ "R6").as[JsValue] \ "renderedValue").as[String]
+          println(reqId)
+          linkListElementBoxMap += (reqId -> txJson)
+        })
+        println(linkListElementBoxMap)
+        val request = linkListElementBoxMap(JavaHelpers.SigmaDsl.BigInt(BigInt(requestId).bigInteger).toString)
+        println(request)
+        if (request.toString != "") {
+          val reqRegisters = (request \ "additionalRegisters").as[JsValue]
+          val boxReceiver = ((reqRegisters \ "R4").as[JsValue] \ "renderedValue").as[String]
+          val boxAmount = ((reqRegisters \ "R5").as[JsValue] \ "renderedValue").as[String]
+          val boxRequestId = requestId
           Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
         }
         else {
@@ -194,4 +202,5 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       }
     }
   }
+
 }

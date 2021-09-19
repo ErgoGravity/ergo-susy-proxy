@@ -3,9 +3,9 @@ package susy.luport
 import helpers.{Configs, Utils}
 import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, OutBox}
+import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBox}
 import play.api.Logger
-import io.circe.{Json => ciJson}
+import play.api.libs.json._
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
@@ -13,6 +13,7 @@ import special.collection.Coll
 
 import java.security.SecureRandom
 import javax.inject.Inject
+import scala.util.control.Breaks.breakable
 
 class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: Explorer) {
   private val logger: Logger = Logger(this.getClass)
@@ -155,8 +156,8 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       for (box <- boxes) {
         val receiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
         val amount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-        val requestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
-
+        val reqId = box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt]
+        val requestId = JavaHelpers.SigmaDsl.toBigInteger(reqId).toString
         val value = Map("requestId" -> requestId, "amount" -> amount, "receiver" -> receiver)
         data += value
       }
@@ -171,10 +172,14 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     println(requestId)
     try {
       val boxes = networkIObject.getUnspentBox(Address.create(networkIObject.luportContractsInterface.get.linkListElementAddress))
-      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString == requestId).head
-      val boxReceiver = utils.toHexString(box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray)
+      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt] == JavaHelpers.SigmaDsl.BigInt(BigInt(requestId).bigInteger)).head
+      val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray
+      val boxReceiver = utils.toHexString(receiver)
+//      val recieverStr = (receiver.map(_.toChar)).mkString
+      val ergotree = utils.toHexString(Address.create("ZsS87XPqhyp74vbnNBqQXcEH99SU9iRV5Zcn1UNWQDehRP6WCgxfjQdrTgyKYLrCHUJRDkPhN1mSNGGSgKcKeNK7fWViWjqXSqzQKE2UPHsAcecoh3R25WVWEYncpiTevuvmhL2MoiDHnKJaP9pAgQf4vKaHs22nnnGgNPyqZN2AjRg6Jt8ReQ94vueoVatqyX67i2ZXzN2hjgvoPo5vftVpqoSgGcmG6sAMLNjhBbyi4ifvwXFVdTeXuBHPwLjv9VVK2q3xq6ebSKovjaJCZekSs7fgckCeumUy6f3JFxgQp7p8tDEzUf93WYfQdtnkhBYyNrmKrEsitPtEbguWHd7Cd9eCBwwRvETayRuUnpPaHMLFdih2Vxn4hehhzG8wjWKpGAwniGqYezhqKXYn4J9kf79ofd3BsYYHRftKwSaD6Vt117J4L8UahU4tCMemMUkSsvCYH9eqGsrB1fc2ZQiDrh7CaBxPvJTn8eDBCxdu64s41uJcmTgoMKVJYcot3maTCc").getErgoAddress.script.bytes)
+      println(ergotree)
       val boxAmount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-      val boxRequestId = box.getRegisters.get(2).getValue.asInstanceOf[BigInt].toString
+      val boxRequestId = requestId
       Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
     } catch {
       case e: Exception => {
