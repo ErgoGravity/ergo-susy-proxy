@@ -5,9 +5,13 @@ import network.{Explorer, NetworkIObject}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBox}
 import play.api.Logger
+import play.api.libs.json.{JsValue, Json}
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import special.collection.Coll
+
 import java.security.SecureRandom
 import javax.inject.Inject
 
@@ -55,46 +59,66 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
 
     def createMaintainerBox(lastRepoBox: InputBox): OutBox = {
       val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = lastRepoBox.getRegisters.get(5).getValue.asInstanceOf[Long]
+      val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
+      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
       amount = amount + fee * amount / 10000
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
-        var newTokenRepoBox = txB.outBoxBuilder()
+        var tokenAmount = 0L
+        var boxValue = 0L
+        var newTxB = txB.outBoxBuilder()
         if (lastRepoBox.getTokens.size() > 1) {
-          newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(lastRepoBox.getTokens.get(0).getId, 1),
-            new ErgoToken(lastRepoBox.getTokens.get(1).getId, lastRepoBox.getTokens.get(1).getValue - amount))
-          newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue)
+          tokenAmount = lastRepoBox.getTokens.get(1).getValue - amount
+          boxValue = lastRepoBox.getValue
+          val newTokenRepoBox = newTxB.value(boxValue)
+            .tokens(lastRepoBox.getTokens.get(0),
+              new ErgoToken(lastRepoBox.getTokens.get(1).getId, tokenAmount))
+            .registers(lastRepoBox.getRegisters.get(0))
+            .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
+            .build()
+          newTokenRepoBox
         }
         else {
-          newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(lastRepoBox.getTokens.get(0).getId, 1))
-          newTokenRepoBox = newTokenRepoBox.value(lastRepoBox.getValue - amount)
+          boxValue = lastRepoBox.getValue - amount
+          val newTokenRepoBox = newTxB.value(boxValue)
+            .tokens(lastRepoBox.getTokens.get(0))
+            .registers(lastRepoBox.getRegisters.get(0))
+            .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
+            .build()
+          newTokenRepoBox
         }
-
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.maintainerAddress).getErgoAddress.script))
-        newTokenRepoBox.build()
       })
     }
 
     def createReceiverBox(signalBox: InputBox, maintainerBox: InputBox): OutBox = {
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
       val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = data.slice(33, 65).toString().toLong
-      amount = amount + fee * amount / 10000
-      val receiver = data.slice(66, data.size).toString
+      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
+      println(amount)
+      amount = amount - fee * amount / 10000
+      val receiver = (data.slice(65, data.size).toArray.map(_.toChar)).mkString
+      println(receiver)
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
-        var newTokenRepoBox = txB.outBoxBuilder()
+        var tokenAmount = 0L
+        var boxValue = 0L
+        val newTxB = txB.outBoxBuilder()
         if (maintainerBox.getTokens.size() > 1) {
-          newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(maintainerBox.getTokens.get(0).getId, 1),
-            new ErgoToken(maintainerBox.getTokens.get(1).getId, maintainerBox.getTokens.get(1).getValue - amount))
-          newTokenRepoBox = newTokenRepoBox.value(maintainerBox.getValue)
+          tokenAmount = amount
+          boxValue = Configs.defaultTxFee
+          val newTokenRepoBox = newTxB.value(boxValue)
+            .tokens(new ErgoToken(maintainerBox.getTokens.get(1).getId, tokenAmount))
+            .contract(new ErgoTreeContract(Address.create(receiver).getErgoAddress.script))
+            .build()
+          newTokenRepoBox
         }
         else {
-          newTokenRepoBox = newTokenRepoBox.tokens(new ErgoToken(maintainerBox.getTokens.get(0).getId, 1))
-          newTokenRepoBox = newTokenRepoBox.value(maintainerBox.getValue - amount)
+          boxValue = Configs.defaultTxFee + amount
+          val newTokenRepoBox = newTxB.value(boxValue)
+            .contract(new ErgoTreeContract(Address.create(receiver).getErgoAddress.script))
+            .build()
+          newTokenRepoBox
         }
-        newTokenRepoBox.contract(new ErgoTreeContract(Address.create(receiver).getErgoAddress.script))
-        newTokenRepoBox.build()
       })
     }
 
@@ -121,23 +145,30 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     }
 
     networkIObject.getCtxClient(implicit ctx => {
-      val prover = ctx.newProverBuilder()
-        .withDLogSecret(Configs.proxySecret)
-        .build()
-      val outputs: Seq[OutBox] = Seq(createTokenRepoBox(tokenRepoBox),
-        createMaintainerBox(maintainerBox), createReceiverBox(signalBox, maintainerBox), createProxyBox(proxyBox))
-      val txB = ctx.newTxBuilder()
-      val tx = txB.boxesToSpend(Seq(signalBox, tokenRepoBox, maintainerBox, proxyBox).asJava)
-        .fee(Configs.defaultTxFee)
-        .outputs(outputs: _*)
-        .sendChangeTo(Configs.proxyAddress.getErgoAddress)
-        .withDataInputs(Seq(lastOracleBox).toList.asJava)
-        .build()
-      val signed = prover.sign(tx)
-      logger.debug(s"pulseTx data ${signed.toJson(false)}")
-      val pulseTxId = ctx.sendTransaction(signed)
-      logger.info(s"sending pulse tx $pulseTxId")
-      pulseTxId
+      try {
+        val prover = ctx.newProverBuilder()
+          .withDLogSecret(Configs.proxySecret)
+          .build()
+        val outputs: Seq[OutBox] = Seq(createTokenRepoBox(tokenRepoBox),
+          createMaintainerBox(maintainerBox), createReceiverBox(signalBox, maintainerBox))
+        val txB = ctx.newTxBuilder()
+        val tx = txB.boxesToSpend(Seq(signalBox, tokenRepoBox, maintainerBox, proxyBox).asJava)
+          .fee(Configs.defaultTxFee)
+          .outputs(outputs: _*)
+          .sendChangeTo(Configs.proxyAddress.getErgoAddress)
+          .withDataInputs(Seq(lastOracleBox).toList.asJava)
+          .build()
+        val signed = prover.sign(tx)
+        logger.debug(s"unlock signed data ${signed.toJson(false)}")
+        val pulseTxId = ctx.sendTransaction(signed)
+        logger.info(s"sending unlock tx $pulseTxId")
+        pulseTxId
+      }
+      catch {
+        case e: Exception => {
+          logger.error(s"Failed to unlock token: ${e}")
+        }
+      }
     })
   }
 
@@ -165,21 +196,32 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     }
   }
 
-  def getRequest(requestId: String): Map[String, String] = {
-    println(requestId)
+  def getAllRequestIds: ListBuffer[String] = {
     try {
-      val boxes = networkIObject.getUnspentBox(Address.create(networkIObject.luportContractsInterface.get.linkListElementAddress))
-      val box = boxes.filter(box => box.getRegisters.get(2).getValue.asInstanceOf[special.sigma.BigInt] == JavaHelpers.SigmaDsl.BigInt(BigInt(requestId).bigInteger)).head
-      val receiver = box.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]].toArray
-      val boxReceiver = (receiver.map(_.toChar)).mkString
-      val boxAmount = box.getRegisters.get(1).getValue.asInstanceOf[Long].toString
-      val boxRequestId = requestId
-      Map("requestId" -> boxRequestId, "amount" -> boxAmount, "receiver" -> boxReceiver)
+      networkIObject.getCtxClient(implicit ctx => {
+        val signalBoxes = Json.parse(explorer.getBoxes(Configs.signalAddress).toString())
+        val signalBoxList = (signalBoxes \ "items").as[List[JsValue]]
+        var requestIds = new ListBuffer[String]()
+        signalBoxList.foreach(txJson => {
+          val registers = (txJson \ "additionalRegisters").as[JsValue]
+          val data = ((registers \ "R5").as[JsValue] \ "renderedValue").as[String]
+          val dataArray = utils.toByteArray(data)
+          val action = dataArray.slice(0, 1).map(_.toChar).mkString
+          if (action == "m") {
+            val reqId = dataArray.slice(1, 33)
+            val requestId = BigInt(reqId).bigInteger.toString
+            requestIds += requestId
+          }
+        })
+        requestIds
+      })
     } catch {
       case e: Exception => {
         println(e)
-        Map("requestId" -> "", "amount" -> "", "receiver" -> "")
+        logger.error(s"Failed to getAllRequests: ${e}")
+        throw e
       }
     }
   }
+
 }
