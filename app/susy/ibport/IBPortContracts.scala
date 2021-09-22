@@ -65,6 +65,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |
        |  sigmaProp (check)
        |}""".stripMargin
+
   lazy val maintainerRepoScript: String =
     s"""{
        |val storeInMaintainer = {(v: ((Box, Box), (Int, Long) )) => {
@@ -125,8 +126,9 @@ class IBPortContracts(ctx: BlockchainContext) {
        |  }
        |  else if (INPUTS(0).tokens(0)._1 == signalTokenNFT){ // Mint
        |    val maintainerOutput = OUTPUTS(1)
-       |    val amount = INPUTS(2).R5[Long].get
        |    //val data = INPUTS(0).R5[Coll[Byte]].get
+       |    //val amount = byteArrayToLong(data.slice(33, 65))
+       |
        |    //val receiver = data.slice(66, data.size)
        |    allOf(Coll(
        |      INPUTS(2).propositionBytes == SELF.propositionBytes,
@@ -137,9 +139,9 @@ class IBPortContracts(ctx: BlockchainContext) {
        |      maintainerOutput.propositionBytes == SELF.propositionBytes,
        |      maintainerOutput.R4[Int].get == INPUTS(2).R4[Int].get,
        |
-       |      OUTPUTS(2).tokens(1)._1 == maintainerRepoId,
+       |      OUTPUTS(2).tokens(0)._1 == maintainerRepoId,
        |
-       |      mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
+       |      //mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
        |      //OUTPUTS(2).propositionBytes == receiver
        |    ))
        |  }
@@ -147,6 +149,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |}
        |  sigmaProp (check)
        |}""".stripMargin
+
   lazy val linkListElementScript: String =
     s"""{
        |  val check = {

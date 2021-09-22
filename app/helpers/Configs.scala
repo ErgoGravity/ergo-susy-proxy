@@ -28,6 +28,8 @@ object Configs extends ConfigHelper {
   lazy val ibportLinklistRepoTokenId: String = readKey("tokens.ibport.linkListRepoTokenId")
 
   lazy val tokenRepoTokenId: String = readKey("tokens.tokenRepoTokenId")
+  lazy val oracleTokenId: String = readKey("tokens.oracleTokenId")
   lazy val signalAddress: String = readKey("contracts.signalAddress")
   lazy val tokenRepoAddress: String = readKey("contracts.tokenRepoAddress")
+  lazy val oracleAddress: String = readKey("contracts.oracleAddress")
 }
