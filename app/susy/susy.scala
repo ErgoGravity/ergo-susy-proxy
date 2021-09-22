@@ -18,17 +18,29 @@ class susy @Inject()(networkIObject: NetworkIObject, luPort: LUPort, ibPort: IBP
   // TODO: change the way of getting signal list
   def getSignalList: List[InputBox] = {
     val boxData = ("signal", Configs.signalAddress, Configs.tokenRepoTokenId)
-
-    networkIObject.getUnspentBox(Address.create(boxData._2))
-      .filter(box => box.getTokens.size() > 0 &&
-        box.getTokens.get(0).getId.toString.equals(boxData._3))
+    println("getSignalList")
+    try {
+      networkIObject.getUnspentBox(Address.create(boxData._2))
+        .filter(box => box.getTokens.size() > 0 &&
+          box.getTokens.get(0).getId.toString.equals(boxData._3))
+    }
+    catch {
+      case e: Exception => {
+        println(e)
+        List()
+      }
+    }
   }
 
   def attachData(): Unit = {
+    println("Attaching data")
     val signalList = getSignalList
     for (signal <- signalList) {
       val data = signal.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      val action = data.slice(0, 1).toString()
+      println(data.size)
+      println(s"data ${data}")
+      val action = (data.slice(0, 1).toArray.map(_.toChar)).mkString
+      println(action)
       if (action == "u") luPort.unlock(signal)
       if (action == "m") ibPort.mint(signal)
       // TODO: approve and changeState must be added

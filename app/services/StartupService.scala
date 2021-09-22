@@ -11,25 +11,34 @@ import network.Client
 import susy.susy
 
 @Singleton
-class StartupService @Inject()(appLifecycle: ApplicationLifecycle, system: ActorSystem,
-                               node: Client, susy: susy)
+class StartupService @Inject()(appLifecycle: ApplicationLifecycle, implicit val system: ActorSystem,
+                               client: Client, susy: susy)
                               (implicit ec: ExecutionContext) {
 
   private val logger: Logger = Logger(this.getClass)
 
-  logger.info("App started!")
-  node.setClient()
+  client.setClient()
 
-  val jobsActor: ActorRef = system.actorOf(Props(new Jobs(susy)), "scheduling-jobs-actor")
-  system.scheduler.scheduleAtFixedRate(
-    initialDelay = 5.seconds,
-    interval = 300.seconds,
-    receiver = jobsActor,
-    message = Jobs.handleActions
-  )
+  lazy val jobsActor: ActorRef = system.actorOf(Props(new Jobs(susy)), "scheduling-jobs-actor")
+  def onStart(): Unit = {
+    logger.info("App started!")
+    system.scheduler.scheduleAtFixedRate(
+      initialDelay = 10.seconds,
+      interval = 300.seconds,
+      receiver = jobsActor,
+      message = ScheduledJobs.handleActions
+    )
+  }
+
+  def onShutdown(): Unit = {
+    system.stop(jobsActor)
+    logger.info("Shutting down")
+  }
 
   appLifecycle.addStopHook { () =>
+    onShutdown()
     logger.info("App stopped!")
     Future.successful(())
   }
+  onStart()
 }
