@@ -96,13 +96,12 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
     }
   }
 
-  def getIBPortRequest: Action[Json] = Action(circe.json) { implicit request =>
-    val requestId = request.body.hcursor.downField("requestId").as[String].getOrElse(throw new Throwable("requestId field must exist"))
+  def getIBPortRequestIds: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     try {
       Ok(
         s"""{
            |  "success": true,
-           |  "request": ${ibport.getRequest(requestId).asJson}
+           |  "requests": ${ibport.getAllRequestIds.asJson}
            |}""".stripMargin
       ).as("application/json")
 
@@ -111,13 +110,12 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
     }
   }
 
-  def getLUPortRequest: Action[Json] = Action(circe.json) { implicit request =>
-    val requestId = request.body.hcursor.downField("requestId").as[String].getOrElse(throw new Throwable("requestId field must exist"))
+  def getLUPortRequestIds: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     try {
       Ok(
         s"""{
            |  "success": true,
-           |  "request": ${luport.getRequest(requestId).asJson}
+           |  "requests": ${luport.getAllRequestIds.asJson}
            |}""".stripMargin
       ).as("application/json")
 
