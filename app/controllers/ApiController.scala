@@ -134,6 +134,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linkListElementAddress" -> ibPortObject.linkListElementAddress,
           "signalAddress" -> Configs.signalAddress,
           "tokenRepoAddress" -> Configs.tokenRepoAddress,
+          "oracleAddress" -> Configs.oracleAddress
         )
 
         val tokenIds: Map[String, String] = Map(
@@ -141,7 +142,9 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linklistTokenId" -> Configs.ibportLinklistTokenId,
           "maintainerTokenId" -> Configs.ibportMaintainerTokenId,
           "gwTokenId" -> Configs.ibportGWTokenId,
-          "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
+          "tokenRepoTokenId" -> Configs.tokenRepoTokenId,
+          "oracleTokenId" -> Configs.oracleTokenId
+        )
 
         Ok(
           s"""{
@@ -166,6 +169,7 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linkListElementAddress" -> luPortObject.linkListElementAddress,
           "signalAddress" -> Configs.signalAddress,
           "tokenRepoAddress" -> Configs.tokenRepoAddress,
+          "oracleAddress" -> Configs.oracleAddress
         )
 
         val tokenIds: Map[String, String] = Map(
@@ -173,7 +177,9 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
           "linklistTokenId" -> Configs.luportLinklistTokenId,
           "maintainerTokenId" -> Configs.luportMaintainerTokenId,
           "tokenId" -> Configs.luportTokenId,
-          "tokenRepoTokenId" -> Configs.tokenRepoTokenId)
+          "tokenRepoTokenId" -> Configs.tokenRepoTokenId,
+          "oracleTokenId" -> Configs.oracleTokenId
+        )
         Ok(
           s"""{
              |  "success": true,
