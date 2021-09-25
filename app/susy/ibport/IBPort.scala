@@ -223,7 +223,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
           val data = ((registers \ "R5").as[JsValue] \ "renderedValue").as[String]
           val dataArray = utils.toByteArray(data)
           val action = dataArray.slice(0, 1).map(_.toChar).mkString
-          if (action == "u") {
+          if (action == "m") {
             val reqId = dataArray.slice(1, 33)
             val requestId = BigInt(reqId).bigInteger.toString
             requestIds += requestId
