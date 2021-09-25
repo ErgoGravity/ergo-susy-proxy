@@ -66,6 +66,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |
        |  sigmaProp (check)
        |}""".stripMargin
+
   lazy val maintainerRepoScript: String =
     s"""{
        |val storeInMaintainer = {(v: ((Box, Box), (Int, Long) )) => {
@@ -128,7 +129,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |  else if (INPUTS(0).tokens(0)._1 == signalTokenNFT){ // unlock
        |    val maintainerOutput = OUTPUTS(1)
        |    val fee = INPUTS(2).R4[Int].get
-       |    val amount = INPUTS(2).R5[Long].get + fee * INPUTS(2).R5[Long].get / 10000
+       |    //val amount = INPUTS(2).R5[Long].get + fee * INPUTS(2).R5[Long].get / 10000
        |
        |    //val data = INPUTS(0).R5[Coll[Byte]].get
        |    //val receiver = data.slice(66, data.size)
@@ -142,9 +143,9 @@ class LUPortContracts(ctx: BlockchainContext) {
        |      maintainerOutput.propositionBytes == SELF.propositionBytes,
        |      maintainerOutput.R4[Int].get == INPUTS(2).R4[Int].get,
        |
-       |      OUTPUTS(2).tokens(1)._1 == maintainerRepoId,
+       |      OUTPUTS(2).tokens(0)._1 == maintainerRepoId,
        |
-       |      unlock(((INPUTS(2), maintainerOutput),(OUTPUTS(2), amount))) == true,
+       |      //unlock(((INPUTS(2), maintainerOutput),(OUTPUTS(2), amount))) == true,
        |      //OUTPUTS(2).propositionBytes == receiver
        |    ))
        |
@@ -153,6 +154,7 @@ class LUPortContracts(ctx: BlockchainContext) {
        |}
        |  sigmaProp (check)
        |}""".stripMargin
+
   lazy val linkListElementScript: String =
     s"""{
        |  val check = {
