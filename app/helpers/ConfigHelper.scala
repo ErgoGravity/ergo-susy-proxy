@@ -1,6 +1,7 @@
 package helpers
 
 import com.typesafe.config.ConfigFactory
+import network.GetRequest.getDetails
 import play.api.{Configuration, Logger}
 
 trait ConfigHelper {
@@ -40,5 +41,39 @@ trait ConfigHelper {
         logger.error(ex.getMessage)
         sys.exit()
     }
+  }
+
+  def getTokens(key: String, default: String = null): Map[String, String]= {
+    try {
+      val url = readKey(key)
+      val tokens = gatewayTokens(url)
+      tokens
+    } catch {
+      case ex: Throwable =>
+        logger.error(ex.getMessage)
+        sys.exit()
+    }
+  }
+  def getContracts(key: String, default: String = null): Map[String, String]= {
+    try {
+      val url = readKey(key)
+      val Contracts = gatewayContracts(url)
+      Contracts
+    } catch {
+      case ex: Throwable =>
+        logger.error(ex.getMessage)
+        sys.exit()
+    }
+  }
+
+  def gatewayTokens(url: String): Map[String, String] = {
+    val data = getDetails(url)
+    val tokenIds = data.hcursor.downField("tokenIds").as[Map[String, String]].getOrElse(throw new Throwable("parse error"))
+    tokenIds
+  }
+  def gatewayContracts(url: String): Map[String, String] = {
+    val data = getDetails(url)
+    val contractAddreses = data.hcursor.downField("contractAddreses").as[Map[String, String]].getOrElse(throw new Throwable("parse error"))
+    contractAddreses
   }
 }

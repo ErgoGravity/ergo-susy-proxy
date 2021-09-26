@@ -1,9 +1,10 @@
 package helpers
 
 import java.math.BigInteger
-
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.{Address, NetworkType, RestApiErgoClient}
+
+import java._
 
 object Configs extends ConfigHelper {
   lazy val nodeUrl: String = readKey("node.url")
@@ -27,9 +28,12 @@ object Configs extends ConfigHelper {
   lazy val ibportLinklistTokenId: String = readKey("tokens.ibport.linkListTokenId")
   lazy val ibportLinklistRepoTokenId: String = readKey("tokens.ibport.linkListRepoTokenId")
 
-  lazy val tokenRepoTokenId: String = readKey("tokens.tokenRepoTokenId")
-  lazy val oracleTokenId: String = readKey("tokens.oracleTokenId")
-  lazy val signalAddress: String = readKey("contracts.signalAddress")
-  lazy val tokenRepoAddress: String = readKey("contracts.tokenRepoAddress")
-  lazy val oracleAddress: String = readKey("contracts.oracleAddress")
+  lazy val gatewayTokens: Map[String, String] = getTokens("gateway.url")
+  lazy val gatewayContracts: Map[String, String] = getContracts("gateway.url")
+
+  lazy val tokenRepoTokenId: String = gatewayTokens("tokenRepoTokenId")
+  lazy val oracleTokenId: String = gatewayTokens("oracleTokenId")
+  lazy val signalAddress: String = gatewayContracts("signalAddress")
+  lazy val tokenRepoAddress: String = gatewayContracts("tokenRepoAddress")
+  lazy val oracleAddress: String = gatewayContracts("oracleAddress")
 }

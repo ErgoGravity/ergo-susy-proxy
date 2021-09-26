@@ -74,7 +74,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
             .tokens(lastRepoBox.getTokens.get(0),
               new ErgoToken(lastRepoBox.getTokens.get(1).getId, tokenAmount))
             .registers(lastRepoBox.getRegisters.get(0))
-            .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
+            .contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.maintainerAddress).getErgoAddress.script))
             .build()
           newTokenRepoBox
         }
@@ -83,7 +83,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
           val newTokenRepoBox = newTxB.value(boxValue)
             .tokens(lastRepoBox.getTokens.get(0))
             .registers(lastRepoBox.getRegisters.get(0))
-            .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
+            .contract(new ErgoTreeContract(Address.create(networkIObject.luportContractsInterface.get.maintainerAddress).getErgoAddress.script))
             .build()
           newTokenRepoBox
         }

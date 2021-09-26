@@ -96,4 +96,12 @@ object GetRequest {
       case Left(ex) => throw ex
     }
   }
+
+  def getDetails(url: String): Json = try {
+    GetRequest.httpGet(url)
+  }
+  catch {
+    case _: Throwable => Json.Null
+  }
+
 }
