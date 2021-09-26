@@ -45,7 +45,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
 
     val boxes = networkIObject.getUnspentBox(Address.create(boxData._2))
     val box = if (boxData._1.equals("proxy"))
-      boxes.filter(box => box.getTokens.size() == 0 && box.getValue > Configs.defaultTxFee * 2)
+      boxes.filter(box => box.getTokens.size() == 0 && box.getValue > Configs.defaultTxFee * 4)
     else
       boxes.filter(box => box.getTokens.size() > 0 &&
         box.getTokens.get(0).getId.toString.equals(boxData._3) &&
@@ -172,7 +172,7 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
           createMaintainerBox(maintainerBox, signalBox), createReceiverBox(signalBox, maintainerBox))
         val txB = ctx.newTxBuilder()
         val tx = txB.boxesToSpend(Seq(signalBox, tokenRepoBox, maintainerBox, proxyBox).asJava)
-          .fee(Configs.defaultTxFee)
+          .fee(2 * Configs.defaultTxFee)
           .outputs(outputs: _*)
           .sendChangeTo(Configs.proxyAddress.getErgoAddress)
           .withDataInputs(Seq(lastOracleBox).toList.asJava)
