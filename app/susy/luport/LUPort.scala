@@ -60,7 +60,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     def createMaintainerBox(lastRepoBox: InputBox): OutBox = {
       val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
+      var amount = BigInt(data.slice(33, 65).toArray).toLong
       amount = amount + fee * amount / 10000
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
@@ -93,7 +93,7 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     def createReceiverBox(signalBox: InputBox, maintainerBox: InputBox): OutBox = {
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
       val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
+      var amount = BigInt(data.slice(33, 65).toArray).toLong
       println(amount)
       amount = amount - fee * amount / 10000
       val receiver = (data.slice(65, data.size).toArray.map(_.toChar)).mkString

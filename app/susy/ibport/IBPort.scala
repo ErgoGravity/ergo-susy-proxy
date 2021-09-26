@@ -13,6 +13,7 @@ import org.ergoplatform.appkit.{Address, ErgoToken, InputBox, JavaHelpers, OutBo
 import play.api.libs.json.{JsValue, Json}
 import special.collection.Coll
 
+import java.io.PrintWriter
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
@@ -57,19 +58,20 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
 
   def mint(signalBox: InputBox): Unit = {
     val maintainerBox = getSpecBox("maintainer")
-    println(maintainerBox)
+    println(maintainerBox.getTokens)
     val lastOracleBox = getSpecBox("oracle")
-    println(lastOracleBox)
+    println(lastOracleBox.getTokens)
     val tokenRepoBox = getSpecBox("tokenRepo", random = true)
-    println(tokenRepoBox)
+    println(tokenRepoBox.getTokens)
     val proxyBox = getSpecBox("proxy", random = true)
-    println(proxyBox)
+    println(proxyBox.getTokens)
 
     def createMaintainerBox(lastRepoBox: InputBox, signalBox: InputBox): OutBox = {
       println("createMaintainerBox")
       val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
+      var amount = BigInt(data.slice(33, 65).toArray).toLong
+//      ByteBuffer.wrap
       println(amount)
       amount = amount - fee * amount / 10000
       networkIObject.getCtxClient(implicit ctx => {
@@ -105,7 +107,8 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       println("createReceiverBox")
       val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
       val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
+      var amount = BigInt(data.slice(33, 65).toArray).toLong
+      //      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
       println(amount)
       amount = amount - fee * amount / 10000
       val receiver = (data.slice(65, data.size).toArray.map(_.toChar)).mkString
@@ -176,6 +179,11 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
           .build()
         val signed = prover.sign(tx)
         logger.debug(s"mint signed data ${signed.toJson(false)}")
+//        println(signed.toJson(false))
+        new PrintWriter(s"mint.txt") {
+          write(signed.toJson(false));
+          close()
+        }
         val txId = ctx.sendTransaction(signed)
         logger.info(s"sending mint tx $txId")
         println(txId)
