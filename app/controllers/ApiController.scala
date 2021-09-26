@@ -138,8 +138,8 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
         )
 
         val tokenIds: Map[String, String] = Map(
-          "linklistRepoTokenId" -> Configs.ibportLinklistRepoTokenId,
-          "linklistTokenId" -> Configs.ibportLinklistTokenId,
+          "linkListRepoTokenId" -> Configs.ibportLinklistRepoTokenId,
+          "linkListTokenId" -> Configs.ibportLinklistTokenId,
           "maintainerTokenId" -> Configs.ibportMaintainerTokenId,
           "gwTokenId" -> Configs.ibportGWTokenId,
           "tokenRepoTokenId" -> Configs.tokenRepoTokenId,
@@ -173,8 +173,8 @@ class ApiController @Inject()(controllerComponents: ControllerComponents,
         )
 
         val tokenIds: Map[String, String] = Map(
-          "linklistRepoTokenId" -> Configs.luportLinklistRepoTokenId,
-          "linklistTokenId" -> Configs.luportLinklistTokenId,
+          "linkListRepoTokenId" -> Configs.luportLinklistRepoTokenId,
+          "linkListTokenId" -> Configs.luportLinklistTokenId,
           "maintainerTokenId" -> Configs.luportMaintainerTokenId,
           "tokenId" -> Configs.luportTokenId,
           "tokenRepoTokenId" -> Configs.tokenRepoTokenId,
