@@ -68,7 +68,7 @@ class IBPortContracts(ctx: BlockchainContext) {
 
   lazy val maintainerRepoScript: String =
     s"""{
-       |val storeInMaintainer = {(v: ((Box, Box), (Int, Long) )) => {
+       | val storeInMaintainer = {(v: ((Box, Box), (Int, Long) )) => {
        |    if (v._1._1.tokens.size > 1){
        |      allOf(Coll(
        |          v._1._2.value == v._1._1.value,
@@ -83,7 +83,7 @@ class IBPortContracts(ctx: BlockchainContext) {
        |    }
        |  }}
        |
-       |val mint: Boolean = {(v: ((Box, Box), (Box, Long))) => {
+       | val mint: Boolean = {(v: ((Box, Box), (Box, Long))) => {
        |  if (v._1._1.tokens.size > 1){
        |      allOf(Coll(
        |          v._1._2.tokens(1)._1 == v._1._1.tokens(1)._1,
@@ -97,57 +97,60 @@ class IBPortContracts(ctx: BlockchainContext) {
        |      ))
        |    }
        |  }}
-       |
-       |val check = {
-       |
-       |  if (INPUTS(0).tokens(0)._1 == linkListNFTToken){ // create Transfer wrap request
-       |
-       |    val linkListTokenOutput = OUTPUTS(0)
-       |    val linkListElementOutput = OUTPUTS(1)
-       |    val maintainerOutput = OUTPUTS(2)
-       |
+       |val createTransferRequestScenario = {
+       | if(INPUTS(0).tokens(0)._1 == linkListNFTToken && INPUTS(0).R5[Int].isDefined){
+       |    val linkListTokenRepo = OUTPUTS(0)
+       |    val linkListElement = OUTPUTS(1)
+       |    val maintainer = OUTPUTS(2)
        |    val fee = INPUTS(1).R4[Int].get
-       |    val amount = linkListElementOutput.R5[Long].get
+       |    val amount = OUTPUTS(1).R5[Long].get
        |
        |    allOf(Coll(
+       |      INPUTS(0).tokens(0)._1 == linkListNFTToken,
        |      INPUTS(0).tokens(1)._1 == linkListTokenRepoId,
        |      INPUTS(1).propositionBytes == SELF.propositionBytes,
        |      INPUTS(1).id == SELF.id,
        |
-       |      linkListTokenOutput.tokens(0)._1 == linkListNFTToken,
-       |      blake2b256(linkListElementOutput.propositionBytes) == linkListElementRepoContractHash,
+       |      linkListTokenRepo.tokens(0)._1 == linkListNFTToken,
+       |      blake2b256(linkListElement.propositionBytes) == linkListElementRepoContractHash,
        |
-       |      maintainerOutput.tokens(1)._1 == maintainerRepoId,
-       |      maintainerOutput.tokens(0)._1 == maintainerNFTToken,
-       |      maintainerOutput.propositionBytes == SELF.propositionBytes,
-       |      maintainerOutput.R4[Int].get == INPUTS(1).R4[Int].get,
-       |      storeInMaintainer(((INPUTS(1), maintainerOutput), (fee, amount))) == true
+       |      maintainer.tokens(0)._1 == maintainerNFTToken,
+       |      maintainer.tokens(1)._1 == maintainerRepoId,
+       |      maintainer.propositionBytes == SELF.propositionBytes,
+       |      maintainer.R4[Int].get == INPUTS(1).R4[Int].get,
+       |      storeInMaintainer(((INPUTS(1), OUTPUTS(2)), (fee, amount)))
        |    ))
+       |    }
+       |    else false
        |  }
-       |  else if (INPUTS(0).tokens(0)._1 == signalTokenNFT){ // Mint
-       |    val maintainerOutput = OUTPUTS(1)
-       |    //val data = INPUTS(0).R5[Coll[Byte]].get
-       |    //val amount = byteArrayToLong(data.slice(33, 65))
+       | val mintScenario = {
+       |   if(INPUTS(0).tokens(0)._1 == signalTokenNFT && INPUTS(0).R5[Coll[Byte]].isDefined){
        |
-       |    //val receiver = data.slice(66, data.size)
+       |    // OUTPUTS(0) -> tokenRepo
+       |    val maintainer = OUTPUTS(1)
+       |    // OUTPUTS(2) -> receiver
+       |    val data = INPUTS(0).R5[Coll[Byte]].get
+       |    val amount = byteArrayToLong(data.slice(33, 65))
+       |    //data.slice(66, data.size) -> receiver address
+       |
        |    allOf(Coll(
+       |      INPUTS(0).tokens(0)._1 == signalTokenNFT,
        |      INPUTS(2).propositionBytes == SELF.propositionBytes,
        |      INPUTS(2).id == SELF.id,
        |
-       |      maintainerOutput.tokens(1)._1 == maintainerRepoId,
-       |      maintainerOutput.tokens(0)._1 == maintainerNFTToken,
-       |      maintainerOutput.propositionBytes == SELF.propositionBytes,
-       |      maintainerOutput.R4[Int].get == INPUTS(2).R4[Int].get,
+       |      maintainer.tokens(0)._1 == maintainerNFTToken,
+       |      maintainer.tokens(0)._2 == 1,
+       |      maintainer.tokens(1)._1 == maintainerRepoId,
+       |      maintainer.propositionBytes == SELF.propositionBytes,
+       |      maintainer.R4[Int].get == INPUTS(2).R4[Int].get,
        |
-       |      OUTPUTS(2).tokens(0)._1 == maintainerRepoId,
-       |
-       |      //mint(((INPUTS(2), maintainerOutput), (OUTPUTS(2), amount))) == true,
+       |      mint(((INPUTS(2), maintainer), (OUTPUTS(2), amount) ))
        |      //OUTPUTS(2).propositionBytes == receiver
        |    ))
+       |   }
+       |    else false
        |  }
-       |  else false
-       |}
-       |  sigmaProp (check)
+       |sigmaProp (createTransferRequestScenario || mintScenario)
        |}""".stripMargin
 
   lazy val linkListElementScript: String =
