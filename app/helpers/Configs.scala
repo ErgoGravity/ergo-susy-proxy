@@ -28,12 +28,7 @@ object Configs extends ConfigHelper {
   lazy val ibportLinklistTokenId: String = readKey("tokens.ibport.linkListTokenId")
   lazy val ibportLinklistRepoTokenId: String = readKey("tokens.ibport.linkListRepoTokenId")
 
-  lazy val gatewayTokens: Map[String, String] = getTokens("gateway.url")
-  lazy val gatewayContracts: Map[String, String] = getContracts("gateway.url")
-
-  lazy val tokenRepoTokenId: String = gatewayTokens("tokenRepoTokenId")
-  lazy val oracleTokenId: String = gatewayTokens("oracleTokenId")
-  lazy val signalAddress: String = gatewayContracts("signalAddress")
-  lazy val tokenRepoAddress: String = gatewayContracts("tokenRepoAddress")
-  lazy val oracleAddress: String = gatewayContracts("oracleAddress")
+  lazy val tokenRepoTokenId: String = readKey("tokens.gateway.tokenRepoTokenId")
+  lazy val signalAddress: String = readKey("contracts.gateway.signalAddress")
+  lazy val tokenRepoAddress: String = readKey("contracts.gateway.tokenRepoAddress")
 }

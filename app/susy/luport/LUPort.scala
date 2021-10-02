@@ -57,10 +57,11 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
     val tokenRepoBox = getSpecBox("tokenRepo", random = true)
     val proxyBox = getSpecBox("proxy", random = true)
 
+    val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
+    var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).order(ByteOrder.BIG_ENDIAN).getLong()
+
     def createMaintainerBox(lastRepoBox: InputBox): OutBox = {
       val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      var amount = BigInt(data.slice(33, 65).toArray).toLong
       amount = amount + fee * amount / 10000
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
@@ -90,14 +91,10 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       })
     }
 
-    def createReceiverBox(signalBox: InputBox, maintainerBox: InputBox): OutBox = {
-      val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
+    def createReceiverBox(maintainerBox: InputBox): OutBox = {
       val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = BigInt(data.slice(33, 65).toArray).toLong
-      println(amount)
       amount = amount - fee * amount / 10000
       val receiver = (data.slice(65, data.size).toArray.map(_.toChar)).mkString
-      println(receiver)
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
         var tokenAmount = 0L
@@ -133,24 +130,13 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       })
     }
 
-    def createProxyBox(proxyBox: InputBox): OutBox = {
-      networkIObject.getCtxClient(implicit ctx => {
-        val txB = ctx.newTxBuilder()
-        var newProxyBox = txB.outBoxBuilder()
-        newProxyBox = newProxyBox.value(proxyBox.getValue - Configs.defaultTxFee)
-        newProxyBox = newProxyBox.tokens(proxyBox.getTokens.asScala.toList: _*)
-        newProxyBox.contract(new ErgoTreeContract(Configs.proxyAddress.getErgoAddress.script))
-        newProxyBox.build()
-      })
-    }
-
     networkIObject.getCtxClient(implicit ctx => {
       try {
         val prover = ctx.newProverBuilder()
           .withDLogSecret(Configs.proxySecret)
           .build()
         val outputs: Seq[OutBox] = Seq(createTokenRepoBox(tokenRepoBox),
-          createMaintainerBox(maintainerBox), createReceiverBox(signalBox, maintainerBox))
+          createMaintainerBox(maintainerBox), createReceiverBox(maintainerBox))
         val txB = ctx.newTxBuilder()
         val tx = txB.boxesToSpend(Seq(signalBox, tokenRepoBox, maintainerBox, proxyBox).asJava)
           .fee(2 * Configs.defaultTxFee)
@@ -171,7 +157,6 @@ class LUPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       }
     })
   }
-
 
   def getLinkListElements: ListBuffer[Map[String, String]] = {
     try {

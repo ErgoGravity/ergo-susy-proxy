@@ -37,8 +37,6 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         ("linkListElement", gatewayAddresses.linkListElementAddress, Configs.ibportLinklistRepoTokenId)
       case "tokenRepo" =>
         ("tokenRepo", Configs.tokenRepoAddress, Configs.tokenRepoTokenId)
-      case "oracle" =>
-        ("oracle", Configs.oracleAddress, Configs.oracleTokenId)
       case "proxy" =>
         ("proxy", Configs.proxyAddress.getErgoAddress.toString, "")
     }
@@ -59,22 +57,16 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
   def mint(signalBox: InputBox): Unit = {
     val maintainerBox = getSpecBox("maintainer")
     println(maintainerBox.getTokens)
-    val lastOracleBox = getSpecBox("oracle")
-    println(lastOracleBox.getTokens)
     val tokenRepoBox = getSpecBox("tokenRepo", random = true)
     println(tokenRepoBox.getTokens)
     val proxyBox = getSpecBox("proxy", random = true)
     println(proxyBox.getTokens)
 
-    def createMaintainerBox(lastRepoBox: InputBox, signalBox: InputBox): OutBox = {
-      println("createMaintainerBox")
-      val fee = lastRepoBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      var amount = BigInt(data.slice(33, 65).toArray).toLong
-//      ByteBuffer.wrap
-      println(amount)
-      amount = amount - fee * amount / 10000
+    val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
+    var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).order(ByteOrder.BIG_ENDIAN).getLong()
+    def createMaintainerBox(lastRepoBox: InputBox): OutBox = {
       networkIObject.getCtxClient(implicit ctx => {
+
         val txB = ctx.newTxBuilder()
         var tokenAmount = 0L
         var boxValue = 0L
@@ -83,36 +75,30 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
         if (lastRepoBox.getTokens.size() > 1) {
           tokenAmount = lastRepoBox.getTokens.get(1).getValue - amount
           boxValue = lastRepoBox.getValue
-          val newTokenRepoBox = newTxB.value(boxValue)
+          val newMaintainerRepoBox = newTxB.value(boxValue)
             .tokens(lastRepoBox.getTokens.get(0),
               new ErgoToken(lastRepoBox.getTokens.get(1).getId, tokenAmount))
             .registers(lastRepoBox.getRegisters.get(0))
             .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
             .build()
-          newTokenRepoBox
+          newMaintainerRepoBox
         }
         else {
           boxValue = lastRepoBox.getValue - amount
-          val newTokenRepoBox = newTxB.value(boxValue)
+          val newMaintainerRepoBox = newTxB.value(boxValue)
             .tokens(lastRepoBox.getTokens.get(0))
             .registers(lastRepoBox.getRegisters.get(0))
             .contract(new ErgoTreeContract(Address.create(networkIObject.ibportContractsInterface.get.maintainerAddress).getErgoAddress.script))
             .build()
-          newTokenRepoBox
+          newMaintainerRepoBox
         }
       })
     }
 
-    def createReceiverBox(signalBox: InputBox, maintainerBox: InputBox): OutBox = {
-      println("createReceiverBox")
-      val data = signalBox.getRegisters.get(1).getValue.asInstanceOf[Coll[Byte]]
-      val fee = maintainerBox.getRegisters.get(0).getValue.asInstanceOf[Int]
-      var amount = BigInt(data.slice(33, 65).toArray).toLong
-      //      var amount = ByteBuffer.wrap(data.slice(33, 65).toArray).getLong()
-      println(amount)
-      amount = amount - fee * amount / 10000
+    def createReceiverBox(maintainerBox: InputBox): OutBox = {
+      println(s"amount: ${amount}")
       val receiver = (data.slice(65, data.size).toArray.map(_.toChar)).mkString
-      println(receiver)
+      println(s"receiver: ${receiver}")
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
         var tokenAmount = 0L
@@ -134,12 +120,10 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
             .build()
           newTokenRepoBox
         }
-
       })
     }
 
     def createTokenRepoBox(lastRepoBox: InputBox): OutBox = {
-      println("createTokenRepoBox")
       networkIObject.getCtxClient(implicit ctx => {
         val txB = ctx.newTxBuilder()
         val newTokenRepoBox = txB.outBoxBuilder()
@@ -151,37 +135,24 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
       })
     }
 
-    def createProxyBox(proxyBox: InputBox): OutBox = {
-      println("createProxyBox")
-      networkIObject.getCtxClient(implicit ctx => {
-        val txB = ctx.newTxBuilder()
-        var newProxyBox = txB.outBoxBuilder()
-          .value(proxyBox.getValue - 2 * Configs.defaultTxFee)
-          .contract(new ErgoTreeContract(Configs.proxyAddress.getErgoAddress.script))
-          .build()
-        newProxyBox
-      })
-    }
-
     networkIObject.getCtxClient(implicit ctx => {
       try {
         val prover = ctx.newProverBuilder()
           .withDLogSecret(Configs.proxySecret)
           .build()
         val outputs: Seq[OutBox] = Seq(createTokenRepoBox(tokenRepoBox),
-          createMaintainerBox(maintainerBox, signalBox), createReceiverBox(signalBox, maintainerBox))
+          createMaintainerBox(maintainerBox), createReceiverBox(maintainerBox))
         val txB = ctx.newTxBuilder()
         val tx = txB.boxesToSpend(Seq(signalBox, tokenRepoBox, maintainerBox, proxyBox).asJava)
           .fee(2 * Configs.defaultTxFee)
           .outputs(outputs: _*)
           .sendChangeTo(Configs.proxyAddress.getErgoAddress)
-          .withDataInputs(Seq(lastOracleBox).toList.asJava)
           .build()
         val signed = prover.sign(tx)
         logger.debug(s"mint signed data ${signed.toJson(false)}")
-//        println(signed.toJson(false))
-        new PrintWriter(s"mint.txt") {
-          write(signed.toJson(false));
+        //        println(signed.toJson(false))
+        new PrintWriter(s"logs/mint.txt") {
+          write(signed.toJson(false))
           close()
         }
         val txId = ctx.sendTransaction(signed)
