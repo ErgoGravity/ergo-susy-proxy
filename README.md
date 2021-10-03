@@ -5,6 +5,7 @@ To run:
 * network package is used to make client
 * services package is used to make jobs to mint or unlock signal boxes.
 * susy package contains susy contracts and related functionality.
+* fill application.conf with your configuration.
 
 ```
 This project is under developement and not tested completely.
