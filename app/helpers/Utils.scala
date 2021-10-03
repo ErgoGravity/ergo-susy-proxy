@@ -1,8 +1,9 @@
 package helpers
 
+import org.ergoplatform.ErgoAddress
+
 import java.io.{PrintWriter, StringWriter}
 import java.math.BigInteger
-
 import javax.inject.{Inject, Singleton}
 import org.ergoplatform.appkit.{Address, JavaHelpers}
 import scorex.util.encode.Base16
@@ -45,4 +46,13 @@ class Utils @Inject()() {
    * @return Address
    */
   def getAddressFromSk(sk: BigInteger) = new Address(JavaHelpers.createP2PKAddress(DLogProverInput(sk).publicImage, Configs.addressEncoder.networkPrefix))
+
+  def getAddress(address: String): Boolean = {
+    try {
+      Configs.addressEncoder.fromString(address).get.script
+      true
+    } catch {
+      case _: Throwable => throw new Exception("Invalid withdraw address")
+    }
+  }
 }

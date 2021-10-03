@@ -150,7 +150,6 @@ class IBPort @Inject()(utils: Utils, networkIObject: NetworkIObject, explorer: E
           .build()
         val signed = prover.sign(tx)
         logger.debug(s"mint signed data ${signed.toJson(false)}")
-        //        println(signed.toJson(false))
         new PrintWriter(s"logs/mint.txt") {
           write(signed.toJson(false))
           close()
